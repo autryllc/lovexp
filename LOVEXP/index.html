@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Love XP — Supabase Beta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Press+Start+2P&family=Cinzel:wght@500;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-theme="fantasy">
+  <div class="bg-layer"></div>
+  <div class="bg-grid"></div>
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+
+  <div id="app"></div>
+
+ <template id="logoTemplate">
+  <div class="logo-wrap">
+    <img src="Images/Website Header.png" alt="Love XP logo" class="app-logo" />
+  </div>
+</template>
+
+  <template id="authTemplate">
+    <div class="auth-shell">
+      <section class="auth-panel glass-strong">
+        <div class="auth-brand"></div>
+        <div class="auth-copy">
+          <span class="eyebrow">LIVE SUPABASE BETA</span>
+          <h1>Shared couple accounts with real synced data</h1>
+          <p>Sign up, pair with a partner, send quests, approve completions, redeem rewards, and test themes across real accounts. This version is built to connect to Supabase Auth and Postgres.</p>
+          <div class="feature-pills">
+            <span class="pill">Supabase Auth</span>
+            <span class="pill">Pairing codes</span>
+            <span class="pill">Real-time sync</span>
+            <span class="pill">Theme system</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="auth-card glass">
+        <div id="configWarning" class="auth-note" style="display:none;margin-bottom:16px;">
+          <strong>Setup required:</strong> add your Supabase URL and anon key to <code>config.js</code>, then refresh.
+        </div>
+
+        <div class="segmented">
+          <button class="seg-btn active" data-auth-view="login">Log In</button>
+          <button class="seg-btn" data-auth-view="signup">Sign Up</button>
+          <button class="seg-btn" data-auth-view="setup">Setup</button>
+        </div>
+
+        <form id="loginForm" class="auth-form active">
+          <h2>Welcome back</h2>
+          <label>Email<input type="email" name="email" placeholder="alex@example.com" required></label>
+          <label>Password<input type="password" name="password" placeholder="••••••••" required></label>
+          <button class="primary-btn block">Log In</button>
+        </form>
+
+        <form id="signupForm" class="auth-form">
+          <h2>Create account</h2>
+          <label>Name<input type="text" name="name" placeholder="Alex" required></label>
+          <label>Email<input type="email" name="email" placeholder="alex@example.com" required></label>
+          <label>Password<input type="password" name="password" placeholder="Create password" minlength="6" required></label>
+          <button class="primary-btn block">Create account</button>
+        </form>
+
+        <div id="setupForm" class="auth-form">
+          <h2>Supabase setup</h2>
+          <p class="muted">1. Run the included SQL in your Supabase SQL editor.<br>2. Copy <code>config.example.js</code> to <code>config.js</code> and paste your project URL + anon key.<br>3. Disable email confirmation for testing or complete the email confirmation flow.</p>
+          <div class="auth-note">
+            <strong>Files included:</strong><br>
+            <code>supabase-schema.sql</code><br>
+            <code>config.example.js</code><br>
+            <code>README.md</code>
+          </div>
+        </div>
+      </section>
+    </div>
+  </template>
+
+  <template id="appTemplate">
+    <div class="app-shell">
+      <aside class="sidebar glass">
+        <div class="sidebar-brand"></div>
+        <div class="sidebar-user glass-soft">
+          <div class="avatar-stack">
+            <span class="avatar" id="userAvatar"></span>
+            <span class="avatar secondary" id="partnerAvatar"></span>
+          </div>
+          <div>
+            <div class="sidebar-user-title" id="pairTitle"></div>
+            <div class="muted small" id="pairSubtitle"></div>
+          </div>
+        </div>
+
+        <nav class="nav" id="nav"></nav>
+
+        <section class="sidebar-card glass-soft">
+          <div class="sidebar-label">Theme</div>
+          <div class="theme-pill"><span class="theme-dot"></span><span id="activeThemeLabel"></span></div>
+          <p class="muted small">Switch visual style instantly for audience testing.</p>
+        </section>
+
+        <section class="sidebar-card glass-soft">
+          <div class="sidebar-label">Quick pair code</div>
+          <div class="invite-code-row">
+            <code id="inviteCodeDisplay">—</code>
+            <button class="ghost-btn small" id="copyCodeBtn">Copy</button>
+          </div>
+          <p class="muted small">Share this with your partner to link accounts.</p>
+        </section>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar glass">
+          <div>
+            <h1 id="viewTitle">Dashboard</h1>
+            <p class="muted" id="viewSubtitle">Track points, teamwork, and rewards together.</p>
+          </div>
+          <div class="topbar-actions">
+            <button class="secondary-btn" id="refreshBtn">Refresh</button>
+            <button class="secondary-btn" id="logoutBtn">Log Out</button>
+            <button class="primary-btn" id="primaryActionBtn">+ Quick Quest</button>
+          </div>
+        </header>
+        <div class="content-area" id="contentArea"></div>
+      </main>
+    </div>
+  </template>
+
+  <div class="toast-stack" id="toastStack"></div>
+
+  <div class="modal-backdrop hidden" id="modalBackdrop">
+    <div class="modal glass-strong" id="modalCard">
+      <div class="modal-head">
+        <div>
+          <h2 id="modalTitle">New Item</h2>
+          <p class="muted small" id="modalSubtitle">Fill out the details below.</p>
+        </div>
+        <button class="icon-btn" id="closeModalBtn" aria-label="Close">✕</button>
+      </div>
+      <form id="modalForm"></form>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
