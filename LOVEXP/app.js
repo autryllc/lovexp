@@ -550,6 +550,7 @@ function renderApp() {
   const content = app.querySelector('#contentArea');
   content.innerHTML = renderCurrentView();
   bindViewEvents(content);
+  bindMobileNav();
 }
 
 function renderCurrentView() {
@@ -1780,6 +1781,36 @@ function closeModal() {
   modalBackdrop.classList.add('hidden');
   modalForm.innerHTML = '';
 }
+
+function closeModal() {
+  modalBackdrop.classList.add('hidden');
+  modalForm.innerHTML = '';
+}
+
+function bindMobileNav() {
+  document.querySelectorAll('[data-mobile-view]').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.mobileView === state.currentView);
+
+    btn.addEventListener('click', () => {
+      state.currentView = btn.dataset.mobileView;
+      renderApp();
+    });
+  });
+
+  const fab = document.getElementById('mobileFabBtn');
+  if (fab) {
+    fab.onclick = () => {
+      if (state.currentView === 'tasks') openModal('task');
+      else if (state.currentView === 'quests') openModal('quest');
+      else if (state.currentView === 'rewards') openModal('reward');
+      else if (state.currentView === 'reviews') openModal('review');
+      else openModal('quest');
+    };
+  }
+}
+
+async function boot() {
+  renderShell();
 
 async function boot() {
   renderShell();
