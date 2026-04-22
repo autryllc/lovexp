@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Love XP — Supabase Beta</title>
+  <title>Love XP</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Press+Start+2P&family=Cinzel:wght@500;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
@@ -28,27 +28,24 @@
       <section class="auth-panel glass-strong">
         <div class="auth-brand"></div>
         <div class="auth-copy">
-          <span class="eyebrow">LIVE SUPABASE BETA</span>
-          <h1>Shared couple accounts with real synced data</h1>
-          <p>Sign up, pair with a partner, send quests, approve completions, redeem rewards, and test themes across real accounts. This version is built to connect to Supabase Auth and Postgres.</p>
-          <div class="feature-pills">
-            <span class="pill">Supabase Auth</span>
-            <span class="pill">Pairing codes</span>
-            <span class="pill">Real-time sync</span>
-            <span class="pill">Theme system</span>
-          </div>
+          <span class="eyebrow">COUPLES APP</span>
+<h1>Turn everyday effort into rewards, teamwork, and fun.</h1>
+<p>Sign up, pair with your partner, send quests, complete tasks, earn XP, and redeem rewards together in one shared space.</p>
+<div class="feature-pills">
+  <span class="pill">Shared XP</span>
+  <span class="pill">Quests</span>
+  <span class="pill">Rewards</span>
+  <span class="pill">Themes</span>
+</div>
         </div>
       </section>
 
       <section class="auth-card glass">
-        <div id="configWarning" class="auth-note" style="display:none;margin-bottom:16px;">
-          <strong>Setup required:</strong> add your Supabase URL and anon key to <code>config.js</code>, then refresh.
-        </div>
+        
 
         <div class="segmented">
           <button class="seg-btn active" data-auth-view="login">Log In</button>
           <button class="seg-btn" data-auth-view="signup">Sign Up</button>
-          <button class="seg-btn" data-auth-view="setup">Setup</button>
         </div>
 
         <form id="loginForm" class="auth-form active">
@@ -66,16 +63,7 @@
           <button class="primary-btn block">Create account</button>
         </form>
 
-        <div id="setupForm" class="auth-form">
-          <h2>Supabase setup</h2>
-          <p class="muted">1. Run the included SQL in your Supabase SQL editor.<br>2. Copy <code>config.example.js</code> to <code>config.js</code> and paste your project URL + anon key.<br>3. Disable email confirmation for testing or complete the email confirmation flow.</p>
-          <div class="auth-note">
-            <strong>Files included:</strong><br>
-            <code>supabase-schema.sql</code><br>
-            <code>config.example.js</code><br>
-            <code>README.md</code>
-          </div>
-        </div>
+       
       </section>
     </div>
   </template>
