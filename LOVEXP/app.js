@@ -152,6 +152,7 @@ function statusBadge(status) {
     awaiting_accept: 'warn',
     pending_approval: 'warn',
     redeemed: 'good',
+    fulfilled: 'good',
     rejected: 'danger',
     declined: 'danger',
     resolved: 'good'
@@ -288,7 +289,7 @@ async function loadAppData() {
       state.quests = [];
       state.rewards = [];
       state.reviews = [];
-state.redemptions = [];
+      state.redemptions = [];
       state.activity = [];
       return;
     }
@@ -316,38 +317,38 @@ state.redemptions = [];
       members?.find((m) => m.user_id !== currentUserId())?.profiles || null;
 
     const [tasks, quests, rewards, reviews, redemptions, activity] = await Promise.all([
-  supabaseClient
-    .from('tasks')
-    .select('*')
-    .eq('couple_id', coupleId)
-    .order('created_at', { ascending: false }),
-  supabaseClient
-    .from('quests')
-    .select('*')
-    .eq('couple_id', coupleId)
-    .order('created_at', { ascending: false }),
-  supabaseClient
-    .from('rewards')
-    .select('*')
-    .eq('couple_id', coupleId)
-    .order('created_at', { ascending: false }),
-  supabaseClient
-    .from('value_reviews')
-    .select('*')
-    .eq('couple_id', coupleId)
-    .order('created_at', { ascending: false }),
-  supabaseClient
-    .from('reward_redemptions')
-    .select('*')
-    .eq('couple_id', coupleId)
-    .order('created_at', { ascending: false }),
-  supabaseClient
-    .from('activity_events')
-    .select('*')
-    .eq('couple_id', coupleId)
-    .order('created_at', { ascending: false })
-    .limit(100)
-]);
+      supabaseClient
+        .from('tasks')
+        .select('*')
+        .eq('couple_id', coupleId)
+        .order('created_at', { ascending: false }),
+      supabaseClient
+        .from('quests')
+        .select('*')
+        .eq('couple_id', coupleId)
+        .order('created_at', { ascending: false }),
+      supabaseClient
+        .from('rewards')
+        .select('*')
+        .eq('couple_id', coupleId)
+        .order('created_at', { ascending: false }),
+      supabaseClient
+        .from('value_reviews')
+        .select('*')
+        .eq('couple_id', coupleId)
+        .order('created_at', { ascending: false }),
+      supabaseClient
+        .from('reward_redemptions')
+        .select('*')
+        .eq('couple_id', coupleId)
+        .order('created_at', { ascending: false }),
+      supabaseClient
+        .from('activity_events')
+        .select('*')
+        .eq('couple_id', coupleId)
+        .order('created_at', { ascending: false })
+        .limit(100)
+    ]);
 
     for (const result of [tasks, quests, rewards, reviews, redemptions, activity]) {
       if (result.error) throw result.error;
@@ -1071,12 +1072,6 @@ function bindViewEvents(root) {
     });
   });
 
-root.querySelectorAll('[data-fulfill-reward]').forEach((btn) => {
-  btn.addEventListener('click', () =>
-    fulfillRewardRedemption(btn.dataset.fulfillReward)
-  );
-});
-
   root.querySelectorAll('[data-open-modal]').forEach((btn) => {
     btn.addEventListener('click', () => openModal(btn.dataset.openModal));
   });
@@ -1133,8 +1128,13 @@ root.querySelectorAll('[data-fulfill-reward]').forEach((btn) => {
   root.querySelectorAll('[data-review-resolve]').forEach((btn) => {
     btn.addEventListener('click', () => resolveReview(btn.dataset.reviewResolve));
   });
-}
 
+  root.querySelectorAll('[data-fulfill-reward]').forEach((btn) => {
+    btn.addEventListener('click', () =>
+      fulfillRewardRedemption(btn.dataset.fulfillReward)
+    );
+  });
+}
 
 async function updateProfile(values) {
   try {
@@ -1785,11 +1785,6 @@ function closeModal() {
   modalForm.innerHTML = '';
 }
 
-function closeModal() {
-  modalBackdrop.classList.add('hidden');
-  modalForm.innerHTML = '';
-}
-
 function bindMobileNav() {
   document.querySelectorAll('[data-mobile-view]').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.mobileView === state.currentView);
@@ -1811,29 +1806,6 @@ function bindMobileNav() {
     };
   }
 }
-function bindMobileNav() {
-  document.querySelectorAll('[data-mobile-view]').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.mobileView === state.currentView);
-
-    btn.addEventListener('click', () => {
-      state.currentView = btn.dataset.mobileView;
-      renderApp();
-    });
-  });
-
-  const fab = document.getElementById('mobileFabBtn');
-  if (fab) {
-    fab.onclick = () => {
-      if (state.currentView === 'tasks') openModal('task');
-      else if (state.currentView === 'quests') openModal('quest');
-      else if (state.currentView === 'rewards') openModal('reward');
-      else if (state.currentView === 'reviews') openModal('review');
-      else openModal('quest');
-    };
-  }
-}
-async function boot() {
-  renderShell();
 
 async function boot() {
   renderShell();
@@ -1858,24 +1830,24 @@ function bindGlobalAuthListener() {
   if (!supabaseClient) return;
 
   supabaseClient.auth.onAuthStateChange((_event, session) => {
-  setTimeout(async () => {
-    try {
-      state.authUser = session?.user || null;
+    setTimeout(async () => {
+      try {
+        state.authUser = session?.user || null;
 
-      if (state.authUser) {
-        await refreshAndRender();
-      } else {
-        resetState();
+        if (state.authUser) {
+          await refreshAndRender();
+        } else {
+          resetState();
+          renderShell();
+        }
+      } catch (err) {
+        console.error(err);
+        toast('Auth refresh failed', err.message || 'Could not reload session data.');
+        state.loading = false;
         renderShell();
       }
-    } catch (err) {
-      console.error(err);
-      toast('Auth refresh failed', err.message || 'Could not reload session data.');
-      state.loading = false;
-      renderShell();
-    }
-  }, 0);
-});
+    }, 0);
+  });
 }
 
 document.getElementById('closeModalBtn').addEventListener('click', closeModal);
