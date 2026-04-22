@@ -152,7 +152,6 @@ function statusBadge(status) {
     awaiting_accept: 'warn',
     pending_approval: 'warn',
     redeemed: 'good',
-    fulfilled: 'good',
     rejected: 'danger',
     declined: 'danger',
     resolved: 'good'
@@ -289,7 +288,7 @@ async function loadAppData() {
       state.quests = [];
       state.rewards = [];
       state.reviews = [];
-      state.redemptions = [];
+state.redemptions = [];
       state.activity = [];
       return;
     }
@@ -317,38 +316,38 @@ async function loadAppData() {
       members?.find((m) => m.user_id !== currentUserId())?.profiles || null;
 
     const [tasks, quests, rewards, reviews, redemptions, activity] = await Promise.all([
-      supabaseClient
-        .from('tasks')
-        .select('*')
-        .eq('couple_id', coupleId)
-        .order('created_at', { ascending: false }),
-      supabaseClient
-        .from('quests')
-        .select('*')
-        .eq('couple_id', coupleId)
-        .order('created_at', { ascending: false }),
-      supabaseClient
-        .from('rewards')
-        .select('*')
-        .eq('couple_id', coupleId)
-        .order('created_at', { ascending: false }),
-      supabaseClient
-        .from('value_reviews')
-        .select('*')
-        .eq('couple_id', coupleId)
-        .order('created_at', { ascending: false }),
-      supabaseClient
-        .from('reward_redemptions')
-        .select('*')
-        .eq('couple_id', coupleId)
-        .order('created_at', { ascending: false }),
-      supabaseClient
-        .from('activity_events')
-        .select('*')
-        .eq('couple_id', coupleId)
-        .order('created_at', { ascending: false })
-        .limit(100)
-    ]);
+  supabaseClient
+    .from('tasks')
+    .select('*')
+    .eq('couple_id', coupleId)
+    .order('created_at', { ascending: false }),
+  supabaseClient
+    .from('quests')
+    .select('*')
+    .eq('couple_id', coupleId)
+    .order('created_at', { ascending: false }),
+  supabaseClient
+    .from('rewards')
+    .select('*')
+    .eq('couple_id', coupleId)
+    .order('created_at', { ascending: false }),
+  supabaseClient
+    .from('value_reviews')
+    .select('*')
+    .eq('couple_id', coupleId)
+    .order('created_at', { ascending: false }),
+  supabaseClient
+    .from('reward_redemptions')
+    .select('*')
+    .eq('couple_id', coupleId)
+    .order('created_at', { ascending: false }),
+  supabaseClient
+    .from('activity_events')
+    .select('*')
+    .eq('couple_id', coupleId)
+    .order('created_at', { ascending: false })
+    .limit(100)
+]);
 
     for (const result of [tasks, quests, rewards, reviews, redemptions, activity]) {
       if (result.error) throw result.error;
@@ -551,7 +550,6 @@ function renderApp() {
   const content = app.querySelector('#contentArea');
   content.innerHTML = renderCurrentView();
   bindViewEvents(content);
-  bindMobileNav();
 }
 
 function renderCurrentView() {
@@ -592,9 +590,11 @@ function renderDashboard() {
     (r) => Number(r.point_cost || 0) <= Number(state.profile?.points_balance || 0)
   ).length;
   const recent = state.activity.slice(0, 6);
-  const pendingFulfillment = state.redemptions.filter(
-    (r) => r.status === 'pending' && r.fulfilled_by_user_id === currentUserId()
-  ).length;
+const pendingFulfillment = state.redemptions.filter(
+  (r) =>
+    r.status === 'pending' &&
+    r.fulfilled_by_user_id === currentUserId()
+).length;
 
   return `
     <section class="hero-panel glass-strong">
@@ -621,65 +621,60 @@ function renderDashboard() {
         <div class="stat-value">${Number(state.profile?.points_balance || 0)}</div>
         <div class="stat-foot">Lifetime earned ${Number(state.profile?.lifetime_earned || 0)}</div>
       </article>
-
+<section class="content-grid">
+  <article class="data-card glass">
+    <div class="panel-head">
+      <h3>Pending Reward Fulfillment</h3>
+    </div>
+    <div class="list-stack">
+      ${
+        state.redemptions.filter(
+          (r) => r.status === 'pending' && r.fulfilled_by_user_id === currentUserId()
+        ).length
+          ? state.redemptions
+              .filter(
+                (r) => r.status === 'pending' && r.fulfilled_by_user_id === currentUserId()
+              )
+              .map(
+                (r) => `
+                  <div class="timeline-item">
+                    <div class="activity-icon">🎁</div>
+                    <div>
+                      <strong>${escapeHtml(r.reward_title)}</strong>
+                      <div class="muted">Your partner redeemed this for ${r.point_cost} XP.</div>
+                    </div>
+                    <div>
+                      <button class="ghost-btn small" data-fulfill-reward="${r.id}">Mark fulfilled</button>
+                    </div>
+                  </div>
+                `
+              )
+              .join('')
+          : `<div class="auth-note">No pending reward fulfillments.</div>`
+      }
+    </div>
+  </article>
+</section>
       <article class="stat-card glass">
         <div class="stat-label">Partner Balance</div>
         <div class="stat-value">${Number(state.partner?.points_balance || 0)}</div>
         <div class="stat-foot">Partner ready for rewards</div>
       </article>
-
       <article class="stat-card glass">
         <div class="stat-label">Pending Approvals</div>
         <div class="stat-value">${pendingTasks}</div>
         <div class="stat-foot">Tasks or quests waiting on review</div>
       </article>
-
-      <article class="stat-card glass">
-        <div class="stat-label">Pending Fulfillments</div>
-        <div class="stat-value">${pendingFulfillment}</div>
-        <div class="stat-foot">Rewards your partner redeemed</div>
-      </article>
-
       <article class="stat-card glass">
         <div class="stat-label">Rewards You Can Redeem</div>
         <div class="stat-value">${availableRewards}</div>
         <div class="stat-foot">Available from your current balance</div>
       </article>
-    </section>
-
-    <section class="content-grid">
-      <article class="data-card glass">
-        <div class="panel-head">
-          <h3>Pending Reward Fulfillment</h3>
-        </div>
-        <div class="list-stack">
-          ${
-            state.redemptions.filter(
-              (r) => r.status === 'pending' && r.fulfilled_by_user_id === currentUserId()
-            ).length
-              ? state.redemptions
-                  .filter(
-                    (r) => r.status === 'pending' && r.fulfilled_by_user_id === currentUserId()
-                  )
-                  .map(
-                    (r) => `
-                      <div class="timeline-item">
-                        <div class="activity-icon">🎁</div>
-                        <div>
-                          <strong>${escapeHtml(r.reward_title)}</strong>
-                          <div class="muted">Your partner redeemed this for ${r.point_cost} XP.</div>
-                        </div>
-                        <div>
-                          <button class="ghost-btn small" data-fulfill-reward="${r.id}">Mark fulfilled</button>
-                        </div>
-                      </div>
-                    `
-                  )
-                  .join('')
-              : `<div class="auth-note">No pending reward fulfillments.</div>`
-          }
-        </div>
-      </article>
+<article class="stat-card glass">
+  <div class="stat-label">Pending Fulfillments</div>
+  <div class="stat-value">${pendingFulfillment}</div>
+  <div class="stat-foot">Rewards your partner redeemed</div>
+</article>
     </section>
 
     <section class="content-grid two-col">
@@ -1072,6 +1067,12 @@ function bindViewEvents(root) {
     });
   });
 
+root.querySelectorAll('[data-fulfill-reward]').forEach((btn) => {
+  btn.addEventListener('click', () =>
+    fulfillRewardRedemption(btn.dataset.fulfillReward)
+  );
+});
+
   root.querySelectorAll('[data-open-modal]').forEach((btn) => {
     btn.addEventListener('click', () => openModal(btn.dataset.openModal));
   });
@@ -1128,13 +1129,8 @@ function bindViewEvents(root) {
   root.querySelectorAll('[data-review-resolve]').forEach((btn) => {
     btn.addEventListener('click', () => resolveReview(btn.dataset.reviewResolve));
   });
-
-  root.querySelectorAll('[data-fulfill-reward]').forEach((btn) => {
-    btn.addEventListener('click', () =>
-      fulfillRewardRedemption(btn.dataset.fulfillReward)
-    );
-  });
 }
+
 
 async function updateProfile(values) {
   try {
@@ -1785,28 +1781,6 @@ function closeModal() {
   modalForm.innerHTML = '';
 }
 
-function bindMobileNav() {
-  document.querySelectorAll('[data-mobile-view]').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.mobileView === state.currentView);
-
-    btn.addEventListener('click', () => {
-      state.currentView = btn.dataset.mobileView;
-      renderApp();
-    });
-  });
-
-  const fab = document.getElementById('mobileFabBtn');
-  if (fab) {
-    fab.onclick = () => {
-      if (state.currentView === 'tasks') openModal('task');
-      else if (state.currentView === 'quests') openModal('quest');
-      else if (state.currentView === 'rewards') openModal('reward');
-      else if (state.currentView === 'reviews') openModal('review');
-      else openModal('quest');
-    };
-  }
-}
-
 async function boot() {
   renderShell();
 
@@ -1830,24 +1804,24 @@ function bindGlobalAuthListener() {
   if (!supabaseClient) return;
 
   supabaseClient.auth.onAuthStateChange((_event, session) => {
-    setTimeout(async () => {
-      try {
-        state.authUser = session?.user || null;
+  setTimeout(async () => {
+    try {
+      state.authUser = session?.user || null;
 
-        if (state.authUser) {
-          await refreshAndRender();
-        } else {
-          resetState();
-          renderShell();
-        }
-      } catch (err) {
-        console.error(err);
-        toast('Auth refresh failed', err.message || 'Could not reload session data.');
-        state.loading = false;
+      if (state.authUser) {
+        await refreshAndRender();
+      } else {
+        resetState();
         renderShell();
       }
-    }, 0);
-  });
+    } catch (err) {
+      console.error(err);
+      toast('Auth refresh failed', err.message || 'Could not reload session data.');
+      state.loading = false;
+      renderShell();
+    }
+  }, 0);
+});
 }
 
 document.getElementById('closeModalBtn').addEventListener('click', closeModal);
