@@ -409,8 +409,7 @@ function renderAuth() {
   const forms = {
     login: app.querySelector('#loginForm'),
     signup: app.querySelector('#signupForm'),
-    setup: app.querySelector('#setupForm')
-  };
+    };
 
   segBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -424,7 +423,7 @@ function renderAuth() {
   forms.login.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!IS_CONFIGURED) {
-      toast('Setup required', 'Add your Supabase keys first.');
+      toast('Setup required', 'SB Key Needed.');
       return;
     }
 
@@ -480,10 +479,6 @@ function renderAuth() {
     }
   });
 
-  if (!IS_CONFIGURED) {
-    const warning = document.getElementById('configWarning');
-    if (warning) warning.style.display = 'block';
-  }
 }
 
 function renderApp() {
@@ -517,7 +512,7 @@ function renderApp() {
     ? `${state.profile.name} + ${state.partner.name}`
     : state.profile?.name || 'Love XP';
   app.querySelector('#pairSubtitle').textContent = state.partner
-    ? 'Paired beta account active'
+    ? 'Paired account active'
     : 'No partner linked yet';
   app.querySelector('#activeThemeLabel').textContent =
     themeLabels[state.activeTheme] || 'Fantasy RPG';
@@ -556,7 +551,7 @@ function renderApp() {
 
 function renderCurrentView() {
   if (state.loading) {
-    return `<section class="panel glass"><h3>Loading…</h3><p class="muted">Pulling live data from Supabase.</p></section>`;
+return `<section class="panel glass"><h3>Loading…</h3><p class="muted">Syncing your latest activity.</p></section>`;
   }
 
   switch (state.currentView) {
@@ -601,8 +596,8 @@ function renderDashboard() {
       <div>
         <span class="eyebrow">LIVE COUPLE PROTOTYPE</span>
         <h2>Level up everyday effort with shared points, quests, and rewards.</h2>
-        <p class="muted">This beta starter is using Supabase Auth + Postgres so you can test real signups, real pairing, and synced activity.</p>
-        <div class="hero-actions">
+<p class="muted">Stay on top of points, tasks, quests, rewards, and shared progress with your partner.</p>
+<div class="hero-actions">
           <button class="primary-btn" data-open-modal="quest">Send Quick Quest</button>
           <button class="secondary-btn" data-view-jump="pairing">Manage Pairing</button>
         </div>
@@ -994,10 +989,10 @@ function renderSettings() {
       </article>
 
       <article class="panel glass">
-        <div class="panel-head"><h3>Beta notes</h3></div>
-        <div class="auth-note">
-          Use two real accounts to test pairing. Both people can create items, approve tasks, redeem rewards, and see shared activity in the same couple workspace.
-        </div>
+        <div class="panel-head"><h3>Account notes</h3></div>
+<div class="auth-note">
+  Both partners can create items, approve tasks, redeem rewards, and see shared activity in the same couple space.
+</div>
         <div class="auth-note"><strong>Email:</strong> ${escapeHtml(
           state.profile?.email || state.authUser?.email || ''
         )}</div>
