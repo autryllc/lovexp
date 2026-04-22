@@ -454,3 +454,59 @@ code { background: rgba(255,255,255,.05); padding: 8px 10px; border-radius: 12px
     overflow-y: auto;
   }
 }
+
+@media (max-width: 900px) {
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: flex-end !important;
+    justify-content: center;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .modal-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 85vh !important;
+    max-height: 85vh !important;
+    margin: 0 !important;
+    border-radius: 22px 22px 0 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 24px;
+  }
+
+  .modal-panel form,
+  .modal-panel .auth-form,
+  .modal-panel .modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: max-content;
+  }
+
+  .modal-actions {
+    position: sticky;
+    bottom: 0;
+    background: rgba(8, 12, 24, 0.96);
+    backdrop-filter: blur(10px);
+    padding-top: 12px;
+    margin-top: 12px;
+    z-index: 2;
+  }
+
+  .modal-panel label,
+  .modal-panel input,
+  .modal-panel select,
+  .modal-panel textarea,
+  .modal-panel button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .modal-panel textarea {
+    min-height: 96px;
+  }
+}
