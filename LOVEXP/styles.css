@@ -74,7 +74,7 @@ a { color: inherit; }
 
 #app { position: relative; z-index: 1; }
 .app-shell { display: grid; grid-template-columns: 300px 1fr; gap: 20px; min-height: 100vh; padding: 20px; }
-.auth-shell { min-height: 100vh; display: grid; grid-template-columns: 1.2fr .85fr; gap: 24px; padding: 24px; align-items: stretch; }
+.auth-shell { min-height: 100vh; display: grid; grid-template-columns: 1.2fr .85fr; gap: 24px; padding: 24px; align-items: center; }
 
 .glass, .glass-soft, .glass-strong {
   border: 1px solid var(--line);
@@ -90,7 +90,9 @@ a { color: inherit; }
 
 .auth-panel, .auth-card { padding: 32px; }
 .auth-panel { display: flex; flex-direction: column; justify-content: center; gap: 28px; min-height: calc(100vh - 48px); }
-.auth-card { align-self: center; width: min(520px, 100%); }
+.auth-card {  width: 100%;
+  max-width: 460px;
+  align-self: center;}
 .auth-copy h1 { font-family: var(--font-display); font-size: clamp(2rem, 3.4vw, 4rem); line-height: 1.03; margin: 10px 0 14px; }
 .auth-copy p { max-width: 56ch; font-size: 1.05rem; color: var(--muted); }
 .auth-note { margin-top: 18px; padding: 14px 16px; background: rgba(255,255,255,.04); border-radius: 16px; color: var(--muted); line-height: 1.5; }
@@ -108,14 +110,14 @@ a { color: inherit; }
 .brand-title { font-size: 1.55rem; font-weight: 800; letter-spacing: -.03em; }
 .brand-sub { color: var(--muted); font-size: .95rem; margin-top: 4px; }
 
-.segmented { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; padding: 6px; background: rgba(255,255,255,.04); border-radius: 18px; }
+.segmented { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; padding: 6px; background: rgba(255,255,255,.04); border-radius: 18px; }
 .seg-btn, .ghost-btn, .icon-btn, .nav-item {
   border: 0; background: transparent; color: var(--muted); border-radius: 14px; padding: 12px 14px;
 }
 .seg-btn.active, .nav-item.active { background: linear-gradient(135deg, rgba(255,255,255,.1), rgba(255,255,255,.04)); color: var(--text); }
 .auth-form { display: none; margin-top: 22px; gap: 14px; }
 .auth-form.active { display: grid; }
-.auth-form h2 { margin: 0 0 2px; }
+.auth-form h2 { margin: 0 0 8px 0; }
 label { display: grid; gap: 8px; color: var(--text); font-weight: 600; }
 input, textarea, select {
   width: 100%; padding: 14px 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,.08);
