@@ -801,7 +801,9 @@ function itemCard(item, type) {
       : Number(item.points_value || item.point_cost || 0);
 
   const actions = [];
-
+  
+const isCreator = item.created_by_user_id === currentUserId();
+  
   if (type === 'task') {
     if (item.assigned_to_user_id === currentUserId() && item.status === 'open') {
       actions.push(
@@ -855,7 +857,14 @@ function itemCard(item, type) {
       `<button class="ghost-btn small" data-review-resolve="${item.id}">Resolve</button>`
     );
   }
-
+if (isCreator) {
+  actions.push(
+    `<button class="ghost-btn small" data-item-edit="${type}:${item.id}">Edit</button>`
+  );
+  actions.push(
+    `<button class="ghost-btn small danger-btn" data-item-delete="${type}:${item.id}">Delete</button>`
+  );
+}
   return `
     <article class="data-card glass">
       <div class="card-topline">
@@ -1134,6 +1143,20 @@ function bindViewEvents(root) {
       fulfillRewardRedemption(btn.dataset.fulfillReward)
     );
   });
+root.querySelectorAll('[data-item-delete]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const [type, id] = btn.dataset.itemDelete.split(':');
+    deleteItem(type, id);
+  });
+});
+
+root.querySelectorAll('[data-item-edit]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const [type, id] = btn.dataset.itemEdit.split(':');
+    openEditModal(type, id);
+  });
+});
+  
 }
 
 async function updateProfile(values) {
@@ -1556,6 +1579,41 @@ async function resolveReview(id) {
   }
 }
 
+async function deleteItem(type, id) {
+  try {
+    const tableMap = {
+      task: 'tasks',
+      quest: 'quests',
+      reward: 'rewards',
+      review: 'value_reviews'
+    };
+
+    const table = tableMap[type];
+    if (!table) throw new Error('Unsupported item type.');
+
+    const confirmed = window.confirm(`Delete this ${type}? This cannot be undone.`);
+    if (!confirmed) return;
+
+    const { error } = await supabaseClient
+      .from(table)
+      .delete()
+      .eq('id', id)
+      .eq('created_by_user_id', currentUserId());
+
+    if (error) throw error;
+
+    await createActivity(
+      type,
+      `${currentUserName()} deleted a ${type}`,
+      `A ${type} they created was removed.`
+    );
+
+    await refreshAndRender(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted.`);
+  } catch (err) {
+    toast('Delete failed', err.message || 'Could not delete item.');
+  }
+}
+
 function onPrimaryAction() {
   if (state.currentView === 'tasks') {
     openModal('task');
@@ -1778,6 +1836,164 @@ function openModal(type) {
   };
 
   document.getElementById('cancelModalBtn').onclick = closeModal;
+}
+function openEditModal(type, id) {
+  const itemMap = {
+    task: state.tasks.find((x) => x.id === id),
+    quest: state.quests.find((x) => x.id === id),
+    reward: state.rewards.find((x) => x.id === id),
+    review: state.reviews.find((x) => x.id === id)
+  };
+
+  const item = itemMap[type];
+  if (!item) {
+    toast('Not found', 'Could not find item to edit.');
+    return;
+  }
+
+  const partnerId = state.partner?.id || '';
+  const partnerName = state.partner?.name || 'Partner';
+  const meId = currentUserId() || '';
+
+  const assigneeOptions = [
+    { id: meId, label: 'You' },
+    ...(partnerId ? [{ id: partnerId, label: partnerName }] : [])
+  ];
+
+  const baseButtons = `
+    <div class="modal-actions">
+      <button type="button" class="secondary-btn" id="cancelModalBtn">Cancel</button>
+      <button class="primary-btn">Save Changes</button>
+    </div>
+  `;
+
+  const templates = {
+    task: {
+      title: 'Edit task',
+      subtitle: 'Update your task details.',
+      html: `
+        <label>Title<input name="title" required value="${escapeHtml(item.title || '')}"></label>
+        <label>Points<input name="points_value" type="number" min="1" value="${Number(item.points_value || 1)}" required></label>
+        <label class="field-full">Description<textarea name="description">${escapeHtml(item.description || '')}</textarea></label>
+        <label>Assign to<select name="assigned_to_user_id">${assigneeOptions
+          .map((o) => `<option value="${o.id}" ${item.assigned_to_user_id === o.id ? 'selected' : ''}>${o.label}</option>`)
+          .join('')}</select></label>
+        <label>Category<input name="category" value="${escapeHtml(item.category || '')}"></label>
+        <label>Recurrence<select name="recurrence_type">
+          <option value="one_time" ${item.recurrence_type === 'one_time' ? 'selected' : ''}>One-time</option>
+          <option value="daily" ${item.recurrence_type === 'daily' ? 'selected' : ''}>Daily</option>
+          <option value="weekly" ${item.recurrence_type === 'weekly' ? 'selected' : ''}>Weekly</option>
+        </select></label>
+        <label>Due date<input name="due_date" type="datetime-local" value="${item.due_date ? item.due_date.slice(0, 16) : ''}"></label>
+        ${baseButtons}
+      `
+    },
+
+    quest: {
+      title: 'Edit quest',
+      subtitle: 'Update your quest details.',
+      html: `
+        <label>Title<input name="title" required value="${escapeHtml(item.title || '')}"></label>
+        <label>Base XP<input name="points_value" type="number" min="1" value="${Number(item.points_value || 1)}" required></label>
+        <label class="field-full">Message<textarea name="description">${escapeHtml(item.description || '')}</textarea></label>
+        <label>Assign to<select name="assigned_to_user_id">${assigneeOptions
+          .map((o) => `<option value="${o.id}" ${item.assigned_to_user_id === o.id ? 'selected' : ''}>${o.label}</option>`)
+          .join('')}</select></label>
+        <label>Bonus XP<input name="bonus_points" type="number" min="0" value="${Number(item.bonus_points || 0)}"></label>
+        <label>Priority<select name="priority">
+          <option value="normal" ${item.priority === 'normal' ? 'selected' : ''}>Normal</option>
+          <option value="urgent" ${item.priority === 'urgent' ? 'selected' : ''}>Urgent</option>
+          <option value="low" ${item.priority === 'low' ? 'selected' : ''}>Low</option>
+        </select></label>
+        <label>Due at<input name="due_at" type="datetime-local" value="${item.due_at ? item.due_at.slice(0, 16) : ''}"></label>
+        ${baseButtons}
+      `
+    },
+
+    reward: {
+      title: 'Edit reward',
+      subtitle: 'Update your reward details.',
+      html: `
+        <label>Title<input name="title" required value="${escapeHtml(item.title || '')}"></label>
+        <label>Cost<input name="point_cost" type="number" min="1" value="${Number(item.point_cost || 1)}" required></label>
+        <label class="field-full">Description<textarea name="description">${escapeHtml(item.description || '')}</textarea></label>
+        <label>Category<input name="category" value="${escapeHtml(item.category || '')}"></label>
+        <label>Cooldown days<input name="cooldown_days" type="number" min="0" value="${Number(item.cooldown_days || 0)}"></label>
+        ${baseButtons}
+      `
+    },
+
+    review: {
+      title: 'Edit review',
+      subtitle: 'Update your value review.',
+      html: `
+        <label>Item title<input name="item_title" required value="${escapeHtml(item.item_title || '')}"></label>
+        <label>Current value<input name="current_value" type="number" min="1" value="${Number(item.current_value || 1)}" required></label>
+        <label class="field-full">Reason<textarea name="reason">${escapeHtml(item.reason || '')}</textarea></label>
+        <label>Item type<select name="item_type">
+          <option value="task" ${item.item_type === 'task' ? 'selected' : ''}>Task</option>
+          <option value="reward" ${item.item_type === 'reward' ? 'selected' : ''}>Reward</option>
+          <option value="quest" ${item.item_type === 'quest' ? 'selected' : ''}>Quest</option>
+        </select></label>
+        <label>Proposed value<input name="proposed_value" type="number" min="1" value="${Number(item.proposed_value || 1)}" required></label>
+        ${baseButtons}
+      `
+    }
+  };
+
+  const tpl = templates[type];
+  if (!tpl) return;
+
+  modalTitle.textContent = tpl.title;
+  modalSubtitle.textContent = tpl.subtitle;
+  modalForm.innerHTML = tpl.html;
+  modalBackdrop.classList.remove('hidden');
+
+  modalForm.onsubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const data = Object.fromEntries(new FormData(modalForm).entries());
+      await updateItem(type, id, data);
+      closeModal();
+    } catch (err) {
+      toast('Update failed', err.message || 'Could not update item.');
+    }
+  };
+
+  document.getElementById('cancelModalBtn').onclick = closeModal;
+}
+
+async function updateItem(type, id, data) {
+  try {
+    const tableMap = {
+      task: 'tasks',
+      quest: 'quests',
+      reward: 'rewards',
+      review: 'value_reviews'
+    };
+
+    const table = tableMap[type];
+    if (!table) throw new Error('Unsupported item type.');
+
+    const { error } = await supabaseClient
+      .from(table)
+      .update(data)
+      .eq('id', id)
+      .eq('created_by_user_id', currentUserId());
+
+    if (error) throw error;
+
+    await createActivity(
+      type,
+      `${currentUserName()} edited a ${type}`,
+      `A ${type} they created was updated.`
+    );
+
+    await refreshAndRender(`${type.charAt(0).toUpperCase() + type.slice(1)} updated.`);
+  } catch (err) {
+    toast('Update failed', err.message || 'Could not update item.');
+  }
 }
 
 function closeModal() {
