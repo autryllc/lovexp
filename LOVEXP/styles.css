@@ -412,6 +412,11 @@ code { background: rgba(255,255,255,.05); padding: 8px 10px; border-radius: 12px
     min-height: 46px;
   }
 
+  .danger-btn {
+  border: 1px solid rgba(255, 90, 90, 0.45);
+  color: #ff8f8f;
+}
+
   .card-topline {
     display: block !important;
   }
@@ -454,6 +459,8 @@ code { background: rgba(255,255,255,.05); padding: 8px 10px; border-radius: 12px
     overflow-y: auto;
   }
 }
+
+/* Updated below 5:53 buttons for edit/delete */
 
 
 /* Updated with below 4:30 */
