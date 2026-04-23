@@ -1066,11 +1066,15 @@ function bindViewEvents(root) {
     btn.addEventListener('click', () => openModal(btn.dataset.openModal));
   });
 
-  root.querySelectorAll('[data-theme-select]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      await updateProfile({ theme: btn.dataset.themeSelect });
-    });
+root.querySelectorAll('[data-theme-select]').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    const nextTheme = btn.dataset.themeSelect;
+    state.activeTheme = nextTheme;
+    document.body.dataset.theme = nextTheme;
+    renderShell();
+    await updateProfile({ theme: nextTheme });
   });
+});
 
   root.querySelector('#createCoupleBtn')?.addEventListener('click', createCoupleRecord);
   root.querySelector('#copyInviteMain')?.addEventListener('click', () => {
@@ -1145,7 +1149,11 @@ function bindViewEvents(root) {
 async function updateProfile(values) {
   try {
     const payload = { ...values };
-    if (payload.theme) state.activeTheme = payload.theme;
+
+    if (payload.theme) {
+      state.activeTheme = payload.theme;
+      document.body.dataset.theme = payload.theme;
+    }
 
     const { error } = await supabaseClient
       .from('profiles')
@@ -1154,7 +1162,11 @@ async function updateProfile(values) {
 
     if (error) throw error;
 
-    await refreshAndRender('Profile saved.');
+    if (payload.theme) {
+      renderShell();
+    } else {
+      await refreshAndRender('Profile saved.');
+    }
   } catch (err) {
     toast('Save failed', err.message);
   }
