@@ -1410,3 +1410,147 @@ body[data-theme="n64"] .topbar {
 body[data-theme="retro"] .topbar {
   background: rgba(58, 12, 88, 0.88) !important;
 }
+
+
+/* ===== FORCE PARTICLES TO SHOW ===== */
+
+.bg-layer,
+.bg-grid,
+.bg-orb {
+  z-index: 0;
+}
+
+.theme-fx {
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: normal !important;
+}
+
+#app,
+.toast-stack,
+.modal-backdrop {
+  position: relative;
+  z-index: 2;
+}
+
+/* FANTASY */
+body[data-theme="fantasy"] .fx-embers,
+body[data-theme="fantasy"] .fx-dust {
+  opacity: 1;
+}
+
+body[data-theme="fantasy"] .fx-embers {
+  background:
+    radial-gradient(circle at 8% 18%, rgba(255,170,90,0.95) 0 4px, transparent 6px),
+    radial-gradient(circle at 18% 74%, rgba(255,220,140,0.85) 0 3px, transparent 6px),
+    radial-gradient(circle at 38% 32%, rgba(255,120,60,0.95) 0 4px, transparent 6px),
+    radial-gradient(circle at 54% 60%, rgba(255,180,80,0.8) 0 3px, transparent 6px),
+    radial-gradient(circle at 76% 22%, rgba(255,140,70,0.9) 0 4px, transparent 6px),
+    radial-gradient(circle at 90% 82%, rgba(255,220,160,0.8) 0 3px, transparent 6px);
+  animation: lovexpEmbers 12s linear infinite;
+}
+
+body[data-theme="fantasy"] .fx-dust {
+  background-image:
+    radial-gradient(circle, rgba(255,245,220,0.24) 0 1.5px, transparent 3px);
+  background-size: 90px 90px;
+  animation: lovexpDust 18s linear infinite;
+}
+
+/* ROMANTIC */
+body[data-theme="romantic"] .fx-petals,
+body[data-theme="romantic"] .fx-dust {
+  opacity: 1;
+}
+
+body[data-theme="romantic"] .fx-petals {
+  background:
+    radial-gradient(ellipse at 10% 16%, rgba(255,120,160,0.95) 0 9px, transparent 11px),
+    radial-gradient(ellipse at 24% 46%, rgba(255,170,200,0.82) 0 8px, transparent 11px),
+    radial-gradient(ellipse at 50% 24%, rgba(255,130,175,0.92) 0 10px, transparent 12px),
+    radial-gradient(ellipse at 72% 62%, rgba(255,190,220,0.8) 0 9px, transparent 11px),
+    radial-gradient(ellipse at 88% 28%, rgba(255,140,180,0.9) 0 8px, transparent 11px);
+  animation: lovexpPetals 16s linear infinite;
+}
+
+body[data-theme="romantic"] .fx-dust {
+  background-image:
+    radial-gradient(circle, rgba(255,230,240,0.14) 0 1.5px, transparent 3px);
+  background-size: 120px 120px;
+  animation: lovexpDustSoft 22s linear infinite;
+}
+
+/* N64 */
+body[data-theme="n64"] .fx-gridlines,
+body[data-theme="n64"] .fx-stars {
+  opacity: 1;
+}
+
+body[data-theme="n64"] .fx-gridlines {
+  inset: auto 0 0 0;
+  height: 55vh;
+  background-image:
+    linear-gradient(rgba(110,170,255,0.28) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(110,170,255,0.28) 2px, transparent 2px);
+  background-size: 42px 42px;
+  transform: perspective(600px) rotateX(72deg) scale(1.5);
+  transform-origin: center bottom;
+}
+
+body[data-theme="n64"] .fx-stars {
+  background:
+    radial-gradient(circle at 10% 14%, rgba(255,255,255,0.95) 0 2px, transparent 4px),
+    radial-gradient(circle at 26% 10%, rgba(255,255,255,0.82) 0 2px, transparent 4px),
+    radial-gradient(circle at 46% 20%, rgba(255,255,255,0.92) 0 2px, transparent 4px),
+    radial-gradient(circle at 66% 12%, rgba(255,255,255,0.82) 0 2px, transparent 4px),
+    radial-gradient(circle at 86% 18%, rgba(255,255,255,0.88) 0 2px, transparent 4px);
+}
+
+/* RETRO */
+body[data-theme="retro"] .fx-gridlines,
+body[data-theme="retro"] .fx-stars {
+  opacity: 1;
+}
+
+body[data-theme="retro"] .fx-gridlines {
+  inset: auto 0 0 0;
+  height: 58vh;
+  background-image:
+    linear-gradient(rgba(255,90,200,0.24) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(70,214,255,0.24) 2px, transparent 2px);
+  background-size: 44px 44px;
+  transform: perspective(600px) rotateX(72deg) scale(1.55);
+  transform-origin: center bottom;
+}
+
+body[data-theme="retro"] .fx-stars {
+  background:
+    radial-gradient(circle at 12% 16%, rgba(255,255,255,0.95) 0 2px, transparent 4px),
+    radial-gradient(circle at 28% 10%, rgba(255,255,255,0.82) 0 2px, transparent 4px),
+    radial-gradient(circle at 48% 18%, rgba(255,255,255,0.92) 0 2px, transparent 4px),
+    radial-gradient(circle at 66% 12%, rgba(255,255,255,0.82) 0 2px, transparent 4px),
+    radial-gradient(circle at 86% 18%, rgba(255,255,255,0.88) 0 2px, transparent 4px);
+}
+
+@keyframes lovexpEmbers {
+  0% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-12px) translateX(8px); }
+  100% { transform: translateY(-26px) translateX(-6px); }
+}
+
+@keyframes lovexpDust {
+  0% { transform: translateY(0) translateX(0); }
+  100% { transform: translateY(-20px) translateX(14px); }
+}
+
+@keyframes lovexpPetals {
+  0% { transform: translateY(-12px) translateX(0); }
+  50% { transform: translateY(10px) translateX(12px); }
+  100% { transform: translateY(28px) translateX(-8px); }
+}
+
+@keyframes lovexpDustSoft {
+  0% { transform: translateY(0) translateX(0); }
+  100% { transform: translateY(14px) translateX(8px); }
+}
