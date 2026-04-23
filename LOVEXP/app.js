@@ -757,6 +757,10 @@ function renderPairing() {
               <div class="auth-note"><strong>Partner:</strong> ${escapeHtml(
                 state.partner?.name || 'Waiting for partner'
               )}</div>
+              <div class="auth-note">
+  Leaving a couple will archive the shared workspace and let you pair again later.
+</div>
+<button class="ghost-btn danger-btn block" id="leaveCoupleBtn">Leave Couple</button>
             `
             : `
               <div class="split-actions">
@@ -994,11 +998,6 @@ function renderSettings() {
 <div class="auth-note">
   Both partners can create items, approve tasks, redeem rewards, and see shared activity in the same couple space.
 </div>
-<div class="auth-note">
-  Leaving a couple will archive the shared workspace and let you pair again later.
-</div>
-<button class="ghost-btn danger-btn block" id="leaveCoupleBtn">Leave Couple</button>
-
         <div class="auth-note"><strong>Email:</strong> ${escapeHtml(
           state.profile?.email || state.authUser?.email || ''
         )}</div>
