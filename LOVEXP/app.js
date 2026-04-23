@@ -1243,9 +1243,10 @@ async function createCoupleRecord() {
       return;
     }
 
-    const existingMembership = await safeSingle('couple_members', {
-      user_id: currentUserId()
-    });
+  const existingMembership = await safeSingle('couple_members', {
+  user_id: currentUserId(),
+  status: 'active'
+});
 
     if (existingMembership) {
       toast('Already paired', 'This account is already linked to a couple.');
@@ -1397,9 +1398,10 @@ async function joinCouple(e) {
       return;
     }
 
-    const existingMembership = await safeSingle('couple_members', {
-      user_id: currentUserId()
-    });
+  const existingMembership = await safeSingle('couple_members', {
+  user_id: currentUserId(),
+  status: 'active'
+});
 
     if (existingMembership) {
       toast('Already paired', 'This account is already linked to a couple.');
@@ -1407,10 +1409,11 @@ async function joinCouple(e) {
       return;
     }
 
-    const existingPartner = await safeSingle('couple_members', {
-      couple_id: couple.id,
-      user_id: currentUserId()
-    });
+   const existingPartner = await safeSingle('couple_members', {
+  couple_id: couple.id,
+  user_id: currentUserId(),
+  status: 'active'
+});
 
     if (existingPartner) {
       toast('Already joined', 'This account is already in that couple.');
