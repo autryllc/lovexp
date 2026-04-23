@@ -1378,3 +1378,19 @@ body[data-theme="retro"] .glass {
   50% { transform: translateY(8px) translateX(10px); }
   100% { transform: translateY(26px) translateX(-8px); }
 }
+
+body[data-theme="fantasy"] .topbar h1::after {
+  content: " ⚔️";
+}
+
+body[data-theme="romantic"] .topbar h1::after {
+  content: " 💖";
+}
+
+body[data-theme="n64"] .topbar h1::after {
+  content: " 🎮";
+}
+
+body[data-theme="retro"] .topbar h1::after {
+  content: " ✨";
+}
