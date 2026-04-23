@@ -1394,3 +1394,19 @@ body[data-theme="n64"] .topbar h1::after {
 body[data-theme="retro"] .topbar h1::after {
   content: " ✨";
 }
+
+body[data-theme="fantasy"] .topbar {
+  background: rgba(60, 28, 10, 0.88) !important;
+}
+
+body[data-theme="romantic"] .topbar {
+  background: rgba(70, 18, 42, 0.88) !important;
+}
+
+body[data-theme="n64"] .topbar {
+  background: rgba(18, 34, 88, 0.88) !important;
+}
+
+body[data-theme="retro"] .topbar {
+  background: rgba(58, 12, 88, 0.88) !important;
+}
