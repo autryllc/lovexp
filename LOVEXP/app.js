@@ -1193,6 +1193,22 @@ async function leaveCouple() {
     if (!confirmed) return;
 
     const now = new Date().toISOString();
+    const coupleId = state.couple.id;
+
+    const { data: members, error: membersFetchError } = await supabaseClient
+      .from('couple_members')
+      .select('user_id, status')
+      .eq('couple_id', coupleId);
+
+    if (membersFetchError) throw membersFetchError;
+
+    const activeMembers = (members || []).filter((m) => m.status === 'active');
+
+    if (!activeMembers.length) {
+      throw new Error('No active members found for this couple.');
+    }
+
+    const userIds = activeMembers.map((m) => m.user_id);
 
     const { error: membersError } = await supabaseClient
       .from('couple_members')
@@ -1200,8 +1216,8 @@ async function leaveCouple() {
         status: 'removed',
         left_at: now
       })
-      .eq('couple_id', state.couple.id)
-      .eq('status', 'active');
+      .eq('couple_id', coupleId)
+      .in('user_id', userIds);
 
     if (membersError) throw membersError;
 
@@ -1212,7 +1228,7 @@ async function leaveCouple() {
         ended_at: now,
         ended_by_user_id: currentUserId()
       })
-      .eq('id', state.couple.id);
+      .eq('id', coupleId);
 
     if (coupleError) throw coupleError;
 
@@ -1220,11 +1236,11 @@ async function leaveCouple() {
       'pairing',
       `${currentUserName()} reset the pairing`,
       'The couple was archived and both partners can pair again later.',
-      state.couple.id
+      coupleId
     );
 
     resetState();
-    await refreshAndRender('Pairing reset. Both users can pair again later.');
+    await refreshAndRender('Pairing reset for both users.');
   } catch (err) {
     console.error(err);
     toast('Could not reset pairing', err.message || 'Something went wrong.');
