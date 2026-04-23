@@ -6,28 +6,24 @@
   <title>Love XP</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Press+Start+2P&family=Cinzel:wght@500;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Press+Start+2P&family=Cinzel:wght@400;500;700&family=Orbitron:wght@400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Exo+2:wght@400;500;600;700;800&family=VT323&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body data-theme="fantasy">
+  <canvas id="particleCanvas"></canvas>
   <div class="bg-layer"></div>
   <div class="bg-grid"></div>
   <div class="bg-orb orb-a"></div>
   <div class="bg-orb orb-b"></div>
-
-  <div class="theme-fx fx-embers"></div>
-  <div class="theme-fx fx-dust"></div>
-  <div class="theme-fx fx-petals"></div>
-  <div class="theme-fx fx-stars"></div>
-  <div class="theme-fx fx-gridlines"></div>
+  <div class="theme-overlay"></div>
 
   <div id="app"></div>
 
-  <template id="logoTemplate">
-    <div class="logo-wrap">
-      <img src="Images/Website Header.png" alt="Love XP logo" class="app-logo" />
-    </div>
-  </template>
+ <template id="logoTemplate">
+  <div class="logo-wrap">
+    <img src="Images/Website Header.png" alt="Love XP logo" class="app-logo" />
+  </div>
+</template>
 
   <template id="authTemplate">
     <div class="auth-shell">
@@ -35,18 +31,20 @@
         <div class="auth-brand"></div>
         <div class="auth-copy">
           <span class="eyebrow">COUPLES APP</span>
-          <h1>Turn everyday effort into rewards, teamwork, and fun.</h1>
-          <p>Sign up, pair with your partner, send quests, complete tasks, earn XP, and redeem rewards together in one shared space.</p>
-          <div class="feature-pills">
-            <span class="pill">Shared XP</span>
-            <span class="pill">Quests</span>
-            <span class="pill">Rewards</span>
-            <span class="pill">Themes</span>
-          </div>
+<h1>Turn everyday effort into rewards, teamwork, and fun.</h1>
+<p>Sign up, pair with your partner, send quests, complete tasks, earn XP, and redeem rewards together in one shared space.</p>
+<div class="feature-pills">
+  <span class="pill">Shared XP</span>
+  <span class="pill">Quests</span>
+  <span class="pill">Rewards</span>
+  <span class="pill">Themes</span>
+</div>
         </div>
       </section>
 
       <section class="auth-card glass">
+        
+
         <div class="segmented">
           <button class="seg-btn active" data-auth-view="login">Log In</button>
           <button class="seg-btn" data-auth-view="signup">Sign Up</button>
@@ -66,6 +64,8 @@
           <label>Password<input type="password" name="password" placeholder="Create password" minlength="6" required></label>
           <button class="primary-btn block">Create account</button>
         </form>
+
+       
       </section>
     </div>
   </template>
@@ -74,7 +74,6 @@
     <div class="app-shell">
       <aside class="sidebar glass">
         <div class="sidebar-brand"></div>
-
         <div class="sidebar-user glass-soft">
           <div class="avatar-stack">
             <span class="avatar" id="userAvatar"></span>
@@ -90,10 +89,7 @@
 
         <section class="sidebar-card glass-soft">
           <div class="sidebar-label">Theme</div>
-          <div class="theme-pill">
-            <span class="theme-dot"></span>
-            <span id="activeThemeLabel"></span>
-          </div>
+          <div class="theme-pill"><span class="theme-dot"></span><span id="activeThemeLabel"></span></div>
           <p class="muted small">Switch visual style instantly for audience testing.</p>
         </section>
 
@@ -124,14 +120,15 @@
     </div>
 
     <nav class="mobile-bottom-nav" id="mobileBottomNav">
-      <button data-mobile-view="dashboard">Home</button>
-      <button data-mobile-view="tasks">Tasks</button>
-      <button data-mobile-view="quests">Quests</button>
-      <button data-mobile-view="rewards">Rewards</button>
-      <button data-mobile-view="settings">Settings</button>
-    </nav>
+  <button data-mobile-view="dashboard">Home</button>
+  <button data-mobile-view="tasks">Tasks</button>
+  <button data-mobile-view="quests">Quests</button>
+  <button data-mobile-view="rewards">Rewards</button>
+  <button data-mobile-view="settings">Settings</button>
+</nav>
 
-    <button class="fab-button" id="mobileFabBtn">+</button>
+<button class="fab-button" id="mobileFabBtn">+</button>
+    
   </template>
 
   <div class="toast-stack" id="toastStack"></div>
