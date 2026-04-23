@@ -55,7 +55,7 @@ const viewMeta = {
   },
   settings: {
     title: 'Settings',
-    subtitle: 'Profile, notifications, and beta-test controls.',
+    subtitle: 'Profile and app preferences.',
     action: 'Save Settings'
   }
 };
@@ -155,8 +155,10 @@ function statusBadge(status) {
     fulfilled: 'good',
     rejected: 'danger',
     declined: 'danger',
-    resolved: 'good'
+    resolved: 'good',
+    removed: 'danger'
   };
+
   return `<span class="badge ${map[status] || ''}">${escapeHtml(
     String(status || 'open').replaceAll('_', ' ')
   )}</span>`;
@@ -168,6 +170,28 @@ function currentUserId() {
 
 function currentUserName() {
   return state.profile?.name || state.authUser?.email || 'You';
+}
+
+function getNavBadgeCounts() {
+  return {
+    dashboard:
+      state.tasks.filter((t) => t.status === 'pending_approval').length +
+      state.redemptions.filter(
+        (r) => r.status === 'pending' && r.fulfilled_by_user_id === currentUserId()
+      ).length,
+    pairing: 0,
+    tasks: state.tasks.filter((t) => t.status === 'pending_approval').length,
+    quests: state.quests.filter((q) =>
+      ['awaiting_accept', 'pending_approval'].includes(q.status)
+    ).length,
+    rewards: state.redemptions.filter(
+      (r) => r.status === 'pending' && r.fulfilled_by_user_id === currentUserId()
+    ).length,
+    reviews: state.reviews.filter((r) => r.status === 'open').length,
+    activity: 0,
+    themes: 0,
+    settings: 0
+  };
 }
 
 function resetState() {
@@ -274,11 +298,11 @@ async function loadAppData() {
     state.profile = await ensureProfile(state.authUser);
     state.activeTheme = state.profile.theme || 'fantasy';
 
-   const { data: memberRows, error: memberError } = await supabaseClient
-  .from('couple_members')
-  .select('couple_id, role, status')
-  .eq('user_id', currentUserId())
-  .eq('status', 'active');
+    const { data: memberRows, error: memberError } = await supabaseClient
+      .from('couple_members')
+      .select('couple_id, role, status')
+      .eq('user_id', currentUserId())
+      .eq('status', 'active');
 
     if (memberError) throw memberError;
 
@@ -308,14 +332,15 @@ async function loadAppData() {
 
     const { data: members, error: membersError } = await supabaseClient
       .from('couple_members')
-      .select('user_id, role, profiles(*)')
+      .select('user_id, role, status, profiles(*)')
       .eq('couple_id', coupleId);
 
     if (membersError) throw membersError;
 
     state.members = members || [];
     state.partner =
-      members?.find((m) => m.user_id !== currentUserId())?.profiles || null;
+      members?.find((m) => m.user_id !== currentUserId() && m.status === 'active')?.profiles ||
+      null;
 
     const [tasks, quests, rewards, reviews, redemptions, activity] = await Promise.all([
       supabaseClient
@@ -377,7 +402,7 @@ async function refreshAndRender(successMessage = '') {
     await Promise.race([
       loadAppData(),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Supabase request timed out.')), 12000)
+        setTimeout(() => reject(new Error('Request timed out.')), 12000)
       )
     ]);
   } catch (err) {
@@ -409,8 +434,8 @@ function renderAuth() {
   const segBtns = [...app.querySelectorAll('.seg-btn')];
   const forms = {
     login: app.querySelector('#loginForm'),
-    signup: app.querySelector('#signupForm'),
-    };
+    signup: app.querySelector('#signupForm')
+  };
 
   segBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -424,7 +449,7 @@ function renderAuth() {
   forms.login.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!IS_CONFIGURED) {
-      toast('Setup required', 'SB Key Needed.');
+      toast('Service unavailable', 'The app is not configured correctly right now.');
       return;
     }
 
@@ -446,7 +471,7 @@ function renderAuth() {
   forms.signup.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!IS_CONFIGURED) {
-      toast('Setup required', 'Add your Supabase keys first.');
+      toast('Service unavailable', 'The app is not configured correctly right now.');
       return;
     }
 
@@ -469,17 +494,13 @@ function renderAuth() {
 
     if (authData.user) {
       await ensureProfile(authData.user, String(data.name || '').trim());
-      toast(
-        'Account created',
-        'Check your email if confirmation is enabled, then log in.'
-      );
+      toast('Account created', 'You can log in now.');
       segBtns[0].click();
       forms.login.querySelector('input[name="email"]').value = String(
         data.email || ''
       ).trim();
     }
   });
-
 }
 
 function renderApp() {
@@ -490,14 +511,18 @@ function renderApp() {
 
   const nav = app.querySelector('#nav');
   const navItems = Object.keys(viewMeta);
+  const badgeCounts = getNavBadgeCounts();
 
   nav.innerHTML = navItems
-    .map(
-      (key) =>
-        `<button class="nav-item ${
-          state.currentView === key ? 'active' : ''
-        }" data-view="${key}">${viewMeta[key].title}</button>`
-    )
+    .map((key) => {
+      const count = badgeCounts[key] || 0;
+      return `
+        <button class="nav-item ${state.currentView === key ? 'active' : ''}" data-view="${key}">
+          <span>${viewMeta[key].title}</span>
+          ${count > 0 ? `<span class="nav-badge">${count}</span>` : ''}
+        </button>
+      `;
+    })
     .join('');
 
   nav.querySelectorAll('.nav-item').forEach((btn) => {
@@ -534,15 +559,13 @@ function renderApp() {
   });
 
   app.querySelector('#refreshBtn').addEventListener('click', async () => {
-    await refreshAndRender('Fresh data pulled from Supabase.');
+    await refreshAndRender('Fresh data pulled.');
   });
 
-  app.querySelector('#primaryActionBtn').textContent =
-    viewMeta[state.currentView].action;
+  app.querySelector('#primaryActionBtn').textContent = viewMeta[state.currentView].action;
   app.querySelector('#primaryActionBtn').addEventListener('click', onPrimaryAction);
   app.querySelector('#viewTitle').textContent = viewMeta[state.currentView].title;
-  app.querySelector('#viewSubtitle').textContent =
-    viewMeta[state.currentView].subtitle;
+  app.querySelector('#viewSubtitle').textContent = viewMeta[state.currentView].subtitle;
 
   const content = app.querySelector('#contentArea');
   content.innerHTML = renderCurrentView();
@@ -552,7 +575,7 @@ function renderApp() {
 
 function renderCurrentView() {
   if (state.loading) {
-return `<section class="panel glass"><h3>Loading…</h3><p class="muted">Syncing your latest activity.</p></section>`;
+    return `<section class="panel glass"><h3>Loading…</h3><p class="muted">Syncing your latest activity.</p></section>`;
   }
 
   switch (state.currentView) {
@@ -593,12 +616,12 @@ function renderDashboard() {
   ).length;
 
   return `
-    <section class="hero-panel glass-strong">
-      <div>
-        <span class="eyebrow">LIVE COUPLE PROTOTYPE</span>
-        <h2>Level up everyday effort with shared points, quests, and rewards.</h2>
-<p class="muted">Stay on top of points, tasks, quests, rewards, and shared progress with your partner.</p>
-<div class="hero-actions">
+    <section class="hero-panel glass-strong dashboard-hero">
+      <div class="dashboard-hero-copy">
+        <span class="eyebrow">LOVE XP</span>
+        <h2>${escapeHtml(currentUserName())}, here’s what needs your attention.</h2>
+        <p class="muted">Track your shared progress, complete quests, fulfill rewards, and keep the momentum going.</p>
+        <div class="hero-actions">
           <button class="primary-btn" data-open-modal="quest">Send Quick Quest</button>
           <button class="secondary-btn" data-view-jump="pairing">Manage Pairing</button>
         </div>
@@ -611,7 +634,7 @@ function renderDashboard() {
       </div>
     </section>
 
-    <section class="stats-grid">
+    <section class="stats-grid dashboard-stats">
       <article class="stat-card glass">
         <div class="stat-label">Your Balance</div>
         <div class="stat-value">${Number(state.profile?.points_balance || 0)}</div>
@@ -621,16 +644,16 @@ function renderDashboard() {
       <article class="stat-card glass">
         <div class="stat-label">Partner Balance</div>
         <div class="stat-value">${Number(state.partner?.points_balance || 0)}</div>
-        <div class="stat-foot">Partner ready for rewards</div>
+        <div class="stat-foot">${escapeHtml(state.partner?.name || 'Partner')} is connected</div>
       </article>
 
-      <article class="stat-card glass">
+      <article class="stat-card glass attention-card">
         <div class="stat-label">Pending Approvals</div>
         <div class="stat-value">${pendingTasks}</div>
         <div class="stat-foot">Tasks or quests waiting on review</div>
       </article>
 
-      <article class="stat-card glass">
+      <article class="stat-card glass attention-card">
         <div class="stat-label">Pending Fulfillments</div>
         <div class="stat-value">${pendingFulfillment}</div>
         <div class="stat-foot">Rewards your partner redeemed</div>
@@ -639,7 +662,7 @@ function renderDashboard() {
       <article class="stat-card glass">
         <div class="stat-label">Rewards You Can Redeem</div>
         <div class="stat-value">${availableRewards}</div>
-        <div class="stat-foot">Available from your current balance</div>
+        <div class="stat-foot">Based on your current XP</div>
       </article>
     </section>
 
@@ -711,12 +734,7 @@ function renderDashboard() {
             recent.length
               ? recent
                   .map((a) =>
-                    timelineLine(
-                      a.icon || '✨',
-                      a.title,
-                      a.body,
-                      formatTime(a.created_at)
-                    )
+                    timelineLine(a.icon || '✨', a.title, a.body, formatTime(a.created_at))
                   )
                   .join('')
               : emptyMini('Activity will appear here once you start using the app.')
@@ -739,7 +757,7 @@ function renderPairing() {
         <p class="muted">
           ${
             hasCouple
-              ? 'Share your invite code or keep testing with your linked partner.'
+              ? 'Share your invite code or manage your current pairing.'
               : 'Generate an invite code for your partner to join from their own account.'
           }
         </p>
@@ -758,9 +776,9 @@ function renderPairing() {
                 state.partner?.name || 'Waiting for partner'
               )}</div>
               <div class="auth-note">
-  Leaving a couple will archive the shared workspace and let you pair again later.
-</div>
-<button class="ghost-btn danger-btn block" id="leaveCoupleBtn">Leave Couple</button>
+                Resetting pairing will archive the shared workspace and allow both people to pair again later.
+              </div>
+              <button class="ghost-btn danger-btn block" id="leaveCoupleBtn">Reset Pairing</button>
             `
             : `
               <div class="split-actions">
@@ -772,7 +790,7 @@ function renderPairing() {
 
       <article class="panel glass">
         <div class="panel-head"><h3>Join with invite code</h3></div>
-        <p class="muted">Use a partner's six-character code to link both accounts.</p>
+        <p class="muted">Use a partner’s six-character code to link both accounts.</p>
         <form id="joinCoupleForm" class="auth-form active">
           <label>Invite code
             <input type="text" name="invite_code" placeholder="AB12CD" maxlength="6" required>
@@ -786,14 +804,10 @@ function renderPairing() {
 
 function itemCard(item, type) {
   const owner =
-    item.created_by_user_id === currentUserId()
-      ? 'You'
-      : state.partner?.name || 'Partner';
+    item.created_by_user_id === currentUserId() ? 'You' : state.partner?.name || 'Partner';
 
   const assignedTo =
-    item.assigned_to_user_id === currentUserId()
-      ? 'You'
-      : state.partner?.name || 'Partner';
+    item.assigned_to_user_id === currentUserId() ? 'You' : state.partner?.name || 'Partner';
 
   const points =
     type === 'quest'
@@ -801,70 +815,44 @@ function itemCard(item, type) {
       : Number(item.points_value || item.point_cost || 0);
 
   const actions = [];
-  
-const isCreator = item.created_by_user_id === currentUserId();
-  
+  const isCreator = item.created_by_user_id === currentUserId();
+
   if (type === 'task') {
     if (item.assigned_to_user_id === currentUserId() && item.status === 'open') {
-      actions.push(
-        `<button class="ghost-btn small" data-task-complete="${item.id}">Mark complete</button>`
-      );
+      actions.push(`<button class="ghost-btn small" data-task-complete="${item.id}">Mark complete</button>`);
     }
-    if (
-      item.created_by_user_id === currentUserId() &&
-      item.status === 'pending_approval'
-    ) {
-      actions.push(
-        `<button class="ghost-btn small" data-task-approve="${item.id}">Approve</button>`
-      );
+    if (item.created_by_user_id === currentUserId() && item.status === 'pending_approval') {
+      actions.push(`<button class="ghost-btn small" data-task-approve="${item.id}">Approve</button>`);
     }
   }
 
   if (type === 'quest') {
-    if (
-      item.assigned_to_user_id === currentUserId() &&
-      item.status === 'awaiting_accept'
-    ) {
-      actions.push(
-        `<button class="ghost-btn small" data-quest-accept="${item.id}">Accept</button>`
-      );
+    if (item.assigned_to_user_id === currentUserId() && item.status === 'awaiting_accept') {
+      actions.push(`<button class="ghost-btn small" data-quest-accept="${item.id}">Accept</button>`);
     }
     if (item.assigned_to_user_id === currentUserId() && item.status === 'accepted') {
-      actions.push(
-        `<button class="ghost-btn small" data-quest-complete="${item.id}">Complete</button>`
-      );
+      actions.push(`<button class="ghost-btn small" data-quest-complete="${item.id}">Complete</button>`);
     }
-    if (
-      item.created_by_user_id === currentUserId() &&
-      item.status === 'pending_approval'
-    ) {
-      actions.push(
-        `<button class="ghost-btn small" data-quest-approve="${item.id}">Approve</button>`
-      );
+    if (item.created_by_user_id === currentUserId() && item.status === 'pending_approval') {
+      actions.push(`<button class="ghost-btn small" data-quest-approve="${item.id}">Approve</button>`);
     }
   }
 
   if (type === 'reward') {
     if (Number(state.profile?.points_balance || 0) >= Number(item.point_cost || 0)) {
-      actions.push(
-        `<button class="ghost-btn small" data-reward-redeem="${item.id}">Redeem</button>`
-      );
+      actions.push(`<button class="ghost-btn small" data-reward-redeem="${item.id}">Redeem</button>`);
     }
   }
 
   if (type === 'review' && item.status === 'open' && item.created_by_user_id !== currentUserId()) {
-    actions.push(
-      `<button class="ghost-btn small" data-review-resolve="${item.id}">Resolve</button>`
-    );
+    actions.push(`<button class="ghost-btn small" data-review-resolve="${item.id}">Resolve</button>`);
   }
-if (isCreator) {
-  actions.push(
-    `<button class="ghost-btn small" data-item-edit="${type}:${item.id}">Edit</button>`
-  );
-  actions.push(
-    `<button class="ghost-btn small danger-btn" data-item-delete="${type}:${item.id}">Delete</button>`
-  );
-}
+
+  if (isCreator) {
+    actions.push(`<button class="ghost-btn small" data-item-edit="${type}:${item.id}">Edit</button>`);
+    actions.push(`<button class="ghost-btn small danger-btn" data-item-delete="${type}:${item.id}">Delete</button>`);
+  }
+
   return `
     <article class="data-card glass">
       <div class="card-topline">
@@ -884,10 +872,11 @@ if (isCreator) {
         }
       </div>
       ${
-        actions.length
-          ? `<div class="card-actions" style="margin-top:16px;">${actions.join('')}</div>`
+        type === 'task' && item.auto_approve
+          ? `<div class="card-meta"><span class="tag">Auto approve enabled</span></div>`
           : ''
       }
+      ${actions.length ? `<div class="card-actions" style="margin-top:16px;">${actions.join('')}</div>` : ''}
     </article>
   `;
 }
@@ -950,9 +939,7 @@ function renderThemes() {
       ${Object.entries(themeLabels)
         .map(
           ([key, label]) => `
-            <article class="theme-card glass ${
-              state.activeTheme === key ? 'selected' : ''
-            }" data-theme-select="${key}">
+            <article class="theme-card glass ${state.activeTheme === key ? 'selected' : ''}" data-theme-select="${key}">
               <div class="theme-art ${key}-art theme-stars">
                 <div class="icon-frame">${themeIcon(key)}</div>
               </div>
@@ -973,18 +960,14 @@ function renderSettings() {
         <div class="panel-head"><h3>Your profile</h3></div>
         <form id="profileForm" class="auth-form active">
           <label>Name
-            <input type="text" name="name" value="${escapeHtml(
-              state.profile?.name || ''
-            )}" required>
+            <input type="text" name="name" value="${escapeHtml(state.profile?.name || '')}" required>
           </label>
           <label>Theme
             <select name="theme">
               ${Object.entries(themeLabels)
                 .map(
                   ([key, label]) =>
-                    `<option value="${key}" ${
-                      state.activeTheme === key ? 'selected' : ''
-                    }>${label}</option>`
+                    `<option value="${key}" ${state.activeTheme === key ? 'selected' : ''}>${label}</option>`
                 )
                 .join('')}
             </select>
@@ -995,9 +978,9 @@ function renderSettings() {
 
       <article class="panel glass">
         <div class="panel-head"><h3>Account notes</h3></div>
-<div class="auth-note">
-  Both partners can create items, approve tasks, redeem rewards, and see shared activity in the same couple space.
-</div>
+        <div class="auth-note">
+          Both partners can create items, approve tasks, redeem rewards, and see shared activity in the same couple space.
+        </div>
         <div class="auth-note"><strong>Email:</strong> ${escapeHtml(
           state.profile?.email || state.authUser?.email || ''
         )}</div>
@@ -1020,9 +1003,7 @@ function sectionWithEmpty(title, subtitle, list, emptyText, inner) {
     ${
       list.length
         ? `<section class="content-grid two-col">${inner}</section>`
-        : `<section class="empty-state glass"><h3>${escapeHtml(
-            emptyText
-          )}</h3><p class="muted">Use the primary action button at the top right to add data and test the flow.</p></section>`
+        : `<section class="empty-state glass"><h3>${escapeHtml(emptyText)}</h3><p class="muted">Use the primary action button at the top right to add data and test the flow.</p></section>`
     }
   `;
 }
@@ -1066,10 +1047,10 @@ function themeIcon(key) {
 
 function themeDescription(key) {
   return {
-    fantasy: 'Epic gradients, elegant type, and adventure energy.',
-    romantic: 'Softer warmth with premium relationship vibes.',
-    n64: 'Bolder contrast with playful console-era flavor.',
-    retro: 'Pixel-inspired neon styling for nostalgic charm.'
+    fantasy: 'Embers, dust, and a dramatic fantasy atmosphere.',
+    romantic: 'Rose-petal warmth and softer premium mood.',
+    n64: 'Bold, playful console energy with a cleaner game-grid vibe.',
+    retro: 'Neon-infused arcade atmosphere with nostalgic style.'
   }[key] || '';
 }
 
@@ -1103,6 +1084,8 @@ function bindViewEvents(root) {
     const data = Object.fromEntries(new FormData(e.currentTarget).entries());
     await updateProfile(data);
   });
+
+  root.querySelector('#leaveCoupleBtn')?.addEventListener('click', leaveCouple);
 
   root.querySelectorAll('[data-task-complete]').forEach((btn) => {
     btn.addEventListener('click', () =>
@@ -1143,23 +1126,20 @@ function bindViewEvents(root) {
       fulfillRewardRedemption(btn.dataset.fulfillReward)
     );
   });
-root.querySelectorAll('[data-item-delete]').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const [type, id] = btn.dataset.itemDelete.split(':');
-    deleteItem(type, id);
-  });
-});
 
-root.querySelectorAll('[data-item-edit]').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const [type, id] = btn.dataset.itemEdit.split(':');
-    openEditModal(type, id);
+  root.querySelectorAll('[data-item-delete]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const [type, id] = btn.dataset.itemDelete.split(':');
+      deleteItem(type, id);
+    });
   });
-});
 
-  root.querySelector('#leaveCoupleBtn')?.addEventListener('click', leaveCouple);
-  
-  
+  root.querySelectorAll('[data-item-edit]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const [type, id] = btn.dataset.itemEdit.split(':');
+      openEditModal(type, id);
+    });
+  });
 }
 
 async function updateProfile(values) {
@@ -1203,7 +1183,6 @@ async function leaveCouple() {
     if (membersFetchError) throw membersFetchError;
 
     const activeMembers = (members || []).filter((m) => m.status === 'active');
-
     if (!activeMembers.length) {
       throw new Error('No active members found for this couple.');
     }
@@ -1247,8 +1226,6 @@ async function leaveCouple() {
   }
 }
 
-
-
 async function createCoupleRecord() {
   try {
     if (state.couple) {
@@ -1256,10 +1233,10 @@ async function createCoupleRecord() {
       return;
     }
 
-  const existingMembership = await safeSingle('couple_members', {
-  user_id: currentUserId(),
-  status: 'active'
-});
+    const existingMembership = await safeSingle('couple_members', {
+      user_id: currentUserId(),
+      status: 'active'
+    });
 
     if (existingMembership) {
       toast('Already paired', 'This account is already linked to a couple.');
@@ -1302,7 +1279,8 @@ async function createCoupleRecord() {
 
     const existingOwnerMembership = await safeSingle('couple_members', {
       couple_id: createdCouple.id,
-      user_id: currentUserId()
+      user_id: currentUserId(),
+      status: 'active'
     });
 
     if (!existingOwnerMembership) {
@@ -1311,7 +1289,8 @@ async function createCoupleRecord() {
         .insert({
           couple_id: createdCouple.id,
           user_id: currentUserId(),
-          role: 'owner'
+          role: 'owner',
+          status: 'active'
         });
 
       if (memberError) throw memberError;
@@ -1411,10 +1390,10 @@ async function joinCouple(e) {
       return;
     }
 
-  const existingMembership = await safeSingle('couple_members', {
-  user_id: currentUserId(),
-  status: 'active'
-});
+    const existingMembership = await safeSingle('couple_members', {
+      user_id: currentUserId(),
+      status: 'active'
+    });
 
     if (existingMembership) {
       toast('Already paired', 'This account is already linked to a couple.');
@@ -1422,11 +1401,11 @@ async function joinCouple(e) {
       return;
     }
 
-   const existingPartner = await safeSingle('couple_members', {
-  couple_id: couple.id,
-  user_id: currentUserId(),
-  status: 'active'
-});
+    const existingPartner = await safeSingle('couple_members', {
+      couple_id: couple.id,
+      user_id: currentUserId(),
+      status: 'active'
+    });
 
     if (existingPartner) {
       toast('Already joined', 'This account is already in that couple.');
@@ -1439,7 +1418,8 @@ async function joinCouple(e) {
       .insert({
         couple_id: couple.id,
         user_id: currentUserId(),
-        role: 'partner'
+        role: 'partner',
+        status: 'active'
       });
 
     if (memberError) throw memberError;
@@ -1463,17 +1443,33 @@ async function updateTaskStatus(id, status) {
     const task = state.tasks.find((t) => t.id === id);
     if (!task) throw new Error('Task not found.');
 
+    const nextStatus =
+      status === 'pending_approval' && task.auto_approve ? 'approved' : status;
+
     const { error } = await supabaseClient
       .from('tasks')
-      .update({ status })
+      .update({ status: nextStatus })
       .eq('id', id);
 
     if (error) throw error;
 
+    if (nextStatus === 'approved') {
+      await adjustPoints(task.assigned_to_user_id, Number(task.points_value || 0));
+
+      await createActivity(
+        'task',
+        `${currentUserName()} completed task “${task.title}”`,
+        `${task.points_value} XP awarded automatically.`
+      );
+
+      await refreshAndRender('Task auto-approved and points awarded.');
+      return;
+    }
+
     await createActivity(
       'task',
       `${currentUserName()} updated task “${task.title}”`,
-      `Status changed to ${String(status).replaceAll('_', ' ')}.`
+      `Status changed to ${String(nextStatus).replaceAll('_', ' ')}.`
     );
 
     await refreshAndRender('Task updated.');
@@ -1537,8 +1533,7 @@ async function approveQuest(id) {
     const quest = state.quests.find((q) => q.id === id);
     if (!quest) throw new Error('Quest not found.');
 
-    const total =
-      Number(quest.points_value || 0) + Number(quest.bonus_points || 0);
+    const total = Number(quest.points_value || 0) + Number(quest.bonus_points || 0);
 
     await adjustPoints(quest.assigned_to_user_id, total);
 
@@ -1689,6 +1684,172 @@ async function deleteItem(type, id) {
   }
 }
 
+function openEditModal(type, id) {
+  const itemMap = {
+    task: state.tasks.find((x) => x.id === id),
+    quest: state.quests.find((x) => x.id === id),
+    reward: state.rewards.find((x) => x.id === id),
+    review: state.reviews.find((x) => x.id === id)
+  };
+
+  const item = itemMap[type];
+  if (!item) {
+    toast('Not found', 'Could not find item to edit.');
+    return;
+  }
+
+  const partnerId = state.partner?.id || '';
+  const partnerName = state.partner?.name || 'Partner';
+
+  const assigneeOptions = partnerId
+    ? [{ id: partnerId, label: partnerName }]
+    : [];
+
+  const baseButtons = `
+    <div class="modal-actions">
+      <button type="button" class="secondary-btn" id="cancelModalBtn">Cancel</button>
+      <button class="primary-btn">Save Changes</button>
+    </div>
+  `;
+
+  const templates = {
+    task: {
+      title: 'Edit task',
+      subtitle: 'Update your task details.',
+      html: `
+        <label>Title<input name="title" required value="${escapeHtml(item.title || '')}"></label>
+        <label>Points<input name="points_value" type="number" min="1" value="${Number(item.points_value || 1)}" required></label>
+        <label class="field-full">Description<textarea name="description">${escapeHtml(item.description || '')}</textarea></label>
+        <label>Assign to<select name="assigned_to_user_id">${assigneeOptions
+          .map((o) => `<option value="${o.id}" ${item.assigned_to_user_id === o.id ? 'selected' : ''}>${o.label}</option>`)
+          .join('')}</select></label>
+        <label>Category<input name="category" value="${escapeHtml(item.category || '')}"></label>
+        <label>Recurrence<select name="recurrence_type">
+          <option value="one_time" ${item.recurrence_type === 'one_time' ? 'selected' : ''}>One-time</option>
+          <option value="daily" ${item.recurrence_type === 'daily' ? 'selected' : ''}>Daily</option>
+          <option value="weekly" ${item.recurrence_type === 'weekly' ? 'selected' : ''}>Weekly</option>
+        </select></label>
+        <label>Due date<input name="due_date" type="datetime-local" value="${item.due_date ? item.due_date.slice(0, 16) : ''}"></label>
+        <label>Auto approve on completion
+          <select name="auto_approve">
+            <option value="false" ${!item.auto_approve ? 'selected' : ''}>No</option>
+            <option value="true" ${item.auto_approve ? 'selected' : ''}>Yes</option>
+          </select>
+        </label>
+        ${baseButtons}
+      `
+    },
+
+    quest: {
+      title: 'Edit quest',
+      subtitle: 'Update your quest details.',
+      html: `
+        <label>Title<input name="title" required value="${escapeHtml(item.title || '')}"></label>
+        <label>Base XP<input name="points_value" type="number" min="1" value="${Number(item.points_value || 1)}" required></label>
+        <label class="field-full">Message<textarea name="description">${escapeHtml(item.description || '')}</textarea></label>
+        <label>Assign to<select name="assigned_to_user_id">${assigneeOptions
+          .map((o) => `<option value="${o.id}" ${item.assigned_to_user_id === o.id ? 'selected' : ''}>${o.label}</option>`)
+          .join('')}</select></label>
+        <label>Bonus XP<input name="bonus_points" type="number" min="0" value="${Number(item.bonus_points || 0)}"></label>
+        <label>Priority<select name="priority">
+          <option value="normal" ${item.priority === 'normal' ? 'selected' : ''}>Normal</option>
+          <option value="urgent" ${item.priority === 'urgent' ? 'selected' : ''}>Urgent</option>
+          <option value="low" ${item.priority === 'low' ? 'selected' : ''}>Low</option>
+        </select></label>
+        <label>Due at<input name="due_at" type="datetime-local" value="${item.due_at ? item.due_at.slice(0, 16) : ''}"></label>
+        ${baseButtons}
+      `
+    },
+
+    reward: {
+      title: 'Edit reward',
+      subtitle: 'Update your reward details.',
+      html: `
+        <label>Title<input name="title" required value="${escapeHtml(item.title || '')}"></label>
+        <label>Cost<input name="point_cost" type="number" min="1" value="${Number(item.point_cost || 1)}" required></label>
+        <label class="field-full">Description<textarea name="description">${escapeHtml(item.description || '')}</textarea></label>
+        <label>Category<input name="category" value="${escapeHtml(item.category || '')}"></label>
+        <label>Cooldown days<input name="cooldown_days" type="number" min="0" value="${Number(item.cooldown_days || 0)}"></label>
+        ${baseButtons}
+      `
+    },
+
+    review: {
+      title: 'Edit review',
+      subtitle: 'Update your value review.',
+      html: `
+        <label>Item title<input name="item_title" required value="${escapeHtml(item.item_title || '')}"></label>
+        <label>Current value<input name="current_value" type="number" min="1" value="${Number(item.current_value || 1)}" required></label>
+        <label class="field-full">Reason<textarea name="reason">${escapeHtml(item.reason || '')}</textarea></label>
+        <label>Item type<select name="item_type">
+          <option value="task" ${item.item_type === 'task' ? 'selected' : ''}>Task</option>
+          <option value="reward" ${item.item_type === 'reward' ? 'selected' : ''}>Reward</option>
+          <option value="quest" ${item.item_type === 'quest' ? 'selected' : ''}>Quest</option>
+        </select></label>
+        <label>Proposed value<input name="proposed_value" type="number" min="1" value="${Number(item.proposed_value || 1)}" required></label>
+        ${baseButtons}
+      `
+    }
+  };
+
+  const tpl = templates[type];
+  if (!tpl) return;
+
+  modalTitle.textContent = tpl.title;
+  modalSubtitle.textContent = tpl.subtitle;
+  modalForm.innerHTML = tpl.html;
+  modalBackdrop.classList.remove('hidden');
+
+  modalForm.onsubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const data = Object.fromEntries(new FormData(modalForm).entries());
+      await updateItem(type, id, data);
+      closeModal();
+    } catch (err) {
+      toast('Update failed', err.message || 'Could not update item.');
+    }
+  };
+
+  document.getElementById('cancelModalBtn').onclick = closeModal;
+}
+
+async function updateItem(type, id, data) {
+  try {
+    const tableMap = {
+      task: 'tasks',
+      quest: 'quests',
+      reward: 'rewards',
+      review: 'value_reviews'
+    };
+
+    if (type === 'task') {
+      data.auto_approve = data.auto_approve === 'true';
+    }
+
+    const table = tableMap[type];
+    if (!table) throw new Error('Unsupported item type.');
+
+    const { error } = await supabaseClient
+      .from(table)
+      .update(data)
+      .eq('id', id)
+      .eq('created_by_user_id', currentUserId());
+
+    if (error) throw error;
+
+    await createActivity(
+      type,
+      `${currentUserName()} edited a ${type}`,
+      `A ${type} they created was updated.`
+    );
+
+    await refreshAndRender(`${type.charAt(0).toUpperCase() + type.slice(1)} updated.`);
+  } catch (err) {
+    toast('Update failed', err.message || 'Could not update item.');
+  }
+}
+
 function onPrimaryAction() {
   if (state.currentView === 'tasks') {
     openModal('task');
@@ -1719,8 +1880,6 @@ function onPrimaryAction() {
     return;
   }
   if (state.currentView === 'themes') {
-    state.currentView = 'settings';
-    renderApp();
     return;
   }
   if (state.currentView === 'settings') {
@@ -1731,12 +1890,10 @@ function onPrimaryAction() {
 function openModal(type) {
   const partnerId = state.partner?.id || '';
   const partnerName = state.partner?.name || 'Partner';
-  const meId = currentUserId() || '';
 
-  const assigneeOptions = [
-    { id: meId, label: 'You' },
-    ...(partnerId ? [{ id: partnerId, label: partnerName }] : [])
-  ];
+  const assigneeOptions = partnerId
+    ? [{ id: partnerId, label: partnerName }]
+    : [];
 
   const baseButtons = `
     <div class="modal-actions">
@@ -1759,11 +1916,18 @@ function openModal(type) {
         <label>Category<select name="category"><option>Chores</option><option>Errands</option><option>Romance</option><option>Support</option><option>Custom</option></select></label>
         <label>Recurrence<select name="recurrence_type"><option value="one_time">One-time</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select></label>
         <label>Due date<input name="due_date" type="datetime-local"></label>
+        <label>Auto approve on completion
+          <select name="auto_approve">
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+          </select>
+        </label>
         ${baseButtons}
       `,
       submit: async (data) => {
         const payload = {
           ...data,
+          auto_approve: data.auto_approve === 'true',
           couple_id: state.couple.id,
           created_by_user_id: currentUserId(),
           status: 'open'
@@ -1912,164 +2076,6 @@ function openModal(type) {
 
   document.getElementById('cancelModalBtn').onclick = closeModal;
 }
-function openEditModal(type, id) {
-  const itemMap = {
-    task: state.tasks.find((x) => x.id === id),
-    quest: state.quests.find((x) => x.id === id),
-    reward: state.rewards.find((x) => x.id === id),
-    review: state.reviews.find((x) => x.id === id)
-  };
-
-  const item = itemMap[type];
-  if (!item) {
-    toast('Not found', 'Could not find item to edit.');
-    return;
-  }
-
-  const partnerId = state.partner?.id || '';
-  const partnerName = state.partner?.name || 'Partner';
-  const meId = currentUserId() || '';
-
-  const assigneeOptions = [
-    { id: meId, label: 'You' },
-    ...(partnerId ? [{ id: partnerId, label: partnerName }] : [])
-  ];
-
-  const baseButtons = `
-    <div class="modal-actions">
-      <button type="button" class="secondary-btn" id="cancelModalBtn">Cancel</button>
-      <button class="primary-btn">Save Changes</button>
-    </div>
-  `;
-
-  const templates = {
-    task: {
-      title: 'Edit task',
-      subtitle: 'Update your task details.',
-      html: `
-        <label>Title<input name="title" required value="${escapeHtml(item.title || '')}"></label>
-        <label>Points<input name="points_value" type="number" min="1" value="${Number(item.points_value || 1)}" required></label>
-        <label class="field-full">Description<textarea name="description">${escapeHtml(item.description || '')}</textarea></label>
-        <label>Assign to<select name="assigned_to_user_id">${assigneeOptions
-          .map((o) => `<option value="${o.id}" ${item.assigned_to_user_id === o.id ? 'selected' : ''}>${o.label}</option>`)
-          .join('')}</select></label>
-        <label>Category<input name="category" value="${escapeHtml(item.category || '')}"></label>
-        <label>Recurrence<select name="recurrence_type">
-          <option value="one_time" ${item.recurrence_type === 'one_time' ? 'selected' : ''}>One-time</option>
-          <option value="daily" ${item.recurrence_type === 'daily' ? 'selected' : ''}>Daily</option>
-          <option value="weekly" ${item.recurrence_type === 'weekly' ? 'selected' : ''}>Weekly</option>
-        </select></label>
-        <label>Due date<input name="due_date" type="datetime-local" value="${item.due_date ? item.due_date.slice(0, 16) : ''}"></label>
-        ${baseButtons}
-      `
-    },
-
-    quest: {
-      title: 'Edit quest',
-      subtitle: 'Update your quest details.',
-      html: `
-        <label>Title<input name="title" required value="${escapeHtml(item.title || '')}"></label>
-        <label>Base XP<input name="points_value" type="number" min="1" value="${Number(item.points_value || 1)}" required></label>
-        <label class="field-full">Message<textarea name="description">${escapeHtml(item.description || '')}</textarea></label>
-        <label>Assign to<select name="assigned_to_user_id">${assigneeOptions
-          .map((o) => `<option value="${o.id}" ${item.assigned_to_user_id === o.id ? 'selected' : ''}>${o.label}</option>`)
-          .join('')}</select></label>
-        <label>Bonus XP<input name="bonus_points" type="number" min="0" value="${Number(item.bonus_points || 0)}"></label>
-        <label>Priority<select name="priority">
-          <option value="normal" ${item.priority === 'normal' ? 'selected' : ''}>Normal</option>
-          <option value="urgent" ${item.priority === 'urgent' ? 'selected' : ''}>Urgent</option>
-          <option value="low" ${item.priority === 'low' ? 'selected' : ''}>Low</option>
-        </select></label>
-        <label>Due at<input name="due_at" type="datetime-local" value="${item.due_at ? item.due_at.slice(0, 16) : ''}"></label>
-        ${baseButtons}
-      `
-    },
-
-    reward: {
-      title: 'Edit reward',
-      subtitle: 'Update your reward details.',
-      html: `
-        <label>Title<input name="title" required value="${escapeHtml(item.title || '')}"></label>
-        <label>Cost<input name="point_cost" type="number" min="1" value="${Number(item.point_cost || 1)}" required></label>
-        <label class="field-full">Description<textarea name="description">${escapeHtml(item.description || '')}</textarea></label>
-        <label>Category<input name="category" value="${escapeHtml(item.category || '')}"></label>
-        <label>Cooldown days<input name="cooldown_days" type="number" min="0" value="${Number(item.cooldown_days || 0)}"></label>
-        ${baseButtons}
-      `
-    },
-
-    review: {
-      title: 'Edit review',
-      subtitle: 'Update your value review.',
-      html: `
-        <label>Item title<input name="item_title" required value="${escapeHtml(item.item_title || '')}"></label>
-        <label>Current value<input name="current_value" type="number" min="1" value="${Number(item.current_value || 1)}" required></label>
-        <label class="field-full">Reason<textarea name="reason">${escapeHtml(item.reason || '')}</textarea></label>
-        <label>Item type<select name="item_type">
-          <option value="task" ${item.item_type === 'task' ? 'selected' : ''}>Task</option>
-          <option value="reward" ${item.item_type === 'reward' ? 'selected' : ''}>Reward</option>
-          <option value="quest" ${item.item_type === 'quest' ? 'selected' : ''}>Quest</option>
-        </select></label>
-        <label>Proposed value<input name="proposed_value" type="number" min="1" value="${Number(item.proposed_value || 1)}" required></label>
-        ${baseButtons}
-      `
-    }
-  };
-
-  const tpl = templates[type];
-  if (!tpl) return;
-
-  modalTitle.textContent = tpl.title;
-  modalSubtitle.textContent = tpl.subtitle;
-  modalForm.innerHTML = tpl.html;
-  modalBackdrop.classList.remove('hidden');
-
-  modalForm.onsubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      const data = Object.fromEntries(new FormData(modalForm).entries());
-      await updateItem(type, id, data);
-      closeModal();
-    } catch (err) {
-      toast('Update failed', err.message || 'Could not update item.');
-    }
-  };
-
-  document.getElementById('cancelModalBtn').onclick = closeModal;
-}
-
-async function updateItem(type, id, data) {
-  try {
-    const tableMap = {
-      task: 'tasks',
-      quest: 'quests',
-      reward: 'rewards',
-      review: 'value_reviews'
-    };
-
-    const table = tableMap[type];
-    if (!table) throw new Error('Unsupported item type.');
-
-    const { error } = await supabaseClient
-      .from(table)
-      .update(data)
-      .eq('id', id)
-      .eq('created_by_user_id', currentUserId());
-
-    if (error) throw error;
-
-    await createActivity(
-      type,
-      `${currentUserName()} edited a ${type}`,
-      `A ${type} they created was updated.`
-    );
-
-    await refreshAndRender(`${type.charAt(0).toUpperCase() + type.slice(1)} updated.`);
-  } catch (err) {
-    toast('Update failed', err.message || 'Could not update item.');
-  }
-}
 
 function closeModal() {
   modalBackdrop.classList.add('hidden');
@@ -2077,13 +2083,38 @@ function closeModal() {
 }
 
 function bindMobileNav() {
-  document.querySelectorAll('[data-mobile-view]').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.mobileView === state.currentView);
+  const mobileBadgeCounts = {
+    dashboard:
+      state.tasks.filter((t) => t.status === 'pending_approval').length +
+      state.redemptions.filter(
+        (r) => r.status === 'pending' && r.fulfilled_by_user_id === currentUserId()
+      ).length,
+    tasks: state.tasks.filter((t) => t.status === 'pending_approval').length,
+    quests: state.quests.filter((q) =>
+      ['awaiting_accept', 'pending_approval'].includes(q.status)
+    ).length,
+    rewards: state.redemptions.filter(
+      (r) => r.status === 'pending' && r.fulfilled_by_user_id === currentUserId()
+    ).length,
+    settings: 0
+  };
 
-    btn.addEventListener('click', () => {
-      state.currentView = btn.dataset.mobileView;
+  document.querySelectorAll('[data-mobile-view]').forEach((btn) => {
+    const view = btn.dataset.mobileView;
+    const label = btn.dataset.label || btn.textContent.trim();
+    const count = mobileBadgeCounts[view] || 0;
+
+    btn.dataset.label = label;
+    btn.classList.toggle('active', view === state.currentView);
+    btn.innerHTML = `
+      <span>${label}</span>
+      ${count > 0 ? `<span class="mobile-nav-badge">${count}</span>` : ''}
+    `;
+
+    btn.onclick = () => {
+      state.currentView = view;
       renderApp();
-    });
+    };
   });
 
   const fab = document.getElementById('mobileFabBtn');
