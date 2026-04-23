@@ -1145,3 +1145,236 @@ code {
   .app-logo { height: 46px; }
   .auth-card { padding: 18px; }
 }
+
+
+/* ===== STRONGER THEME OVERRIDES ===== */
+
+.theme-fx {
+  mix-blend-mode: screen;
+}
+
+body[data-theme="fantasy"] .fx-embers,
+body[data-theme="fantasy"] .fx-dust {
+  opacity: 0.95;
+}
+
+body[data-theme="fantasy"] .fx-embers {
+  background-image:
+    radial-gradient(circle at 8% 18%, rgba(255,160,80,0.95) 0 3px, transparent 5px),
+    radial-gradient(circle at 18% 74%, rgba(255,210,120,0.75) 0 2px, transparent 5px),
+    radial-gradient(circle at 42% 32%, rgba(255,120,60,0.9) 0 3px, transparent 5px),
+    radial-gradient(circle at 66% 58%, rgba(255,190,90,0.8) 0 2px, transparent 4px),
+    radial-gradient(circle at 84% 22%, rgba(255,140,60,0.85) 0 3px, transparent 5px),
+    radial-gradient(circle at 92% 80%, rgba(255,220,140,0.7) 0 2px, transparent 5px);
+  animation: fantasyEmbersDrift 14s linear infinite;
+}
+
+body[data-theme="fantasy"] .fx-dust {
+  background-image:
+    radial-gradient(circle, rgba(255,245,220,0.22) 0 1px, transparent 2px);
+  background-size: 90px 90px;
+  animation: fantasyDustFloat 22s linear infinite;
+}
+
+body[data-theme="fantasy"] .bg-layer {
+  background:
+    radial-gradient(circle at top center, rgba(255,170,90,0.18), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(110,80,180,0.18), transparent 22%),
+    linear-gradient(180deg, #1b120d 0%, #0f1726 48%, #0a1018 100%);
+}
+
+body[data-theme="fantasy"] .topbar,
+body[data-theme="fantasy"] .sidebar,
+body[data-theme="fantasy"] .glass-strong {
+  box-shadow:
+    0 0 0 1px rgba(255,180,120,0.08),
+    0 24px 60px rgba(0,0,0,0.4),
+    0 0 40px rgba(255,160,80,0.08);
+}
+
+body[data-theme="romantic"] .fx-petals,
+body[data-theme="romantic"] .fx-dust {
+  opacity: 0.95;
+}
+
+body[data-theme="romantic"] .fx-petals {
+  background-image:
+    radial-gradient(ellipse at 12% 14%, rgba(255,120,150,0.95) 0 8px, transparent 10px),
+    radial-gradient(ellipse at 28% 46%, rgba(255,160,190,0.7) 0 7px, transparent 10px),
+    radial-gradient(ellipse at 54% 24%, rgba(255,140,170,0.88) 0 9px, transparent 11px),
+    radial-gradient(ellipse at 68% 62%, rgba(255,180,210,0.72) 0 8px, transparent 10px),
+    radial-gradient(ellipse at 86% 28%, rgba(255,120,165,0.9) 0 8px, transparent 11px);
+  animation: romanticPetalsFall 18s linear infinite;
+}
+
+body[data-theme="romantic"] .fx-dust {
+  background-image:
+    radial-gradient(circle, rgba(255,230,240,0.18) 0 1px, transparent 2px);
+  background-size: 120px 120px;
+}
+
+body[data-theme="romantic"] .bg-layer {
+  background:
+    radial-gradient(circle at top center, rgba(255,150,190,0.22), transparent 26%),
+    radial-gradient(circle at bottom left, rgba(255,210,230,0.12), transparent 24%),
+    linear-gradient(180deg, #2a1420 0%, #1b1220 50%, #10131b 100%);
+}
+
+body[data-theme="romantic"] .topbar,
+body[data-theme="romantic"] .sidebar,
+body[data-theme="romantic"] .glass-strong {
+  box-shadow:
+    0 0 0 1px rgba(255,170,200,0.1),
+    0 24px 60px rgba(0,0,0,0.4),
+    0 0 45px rgba(255,130,180,0.08);
+}
+
+body[data-theme="n64"] .fx-gridlines,
+body[data-theme="n64"] .fx-stars {
+  opacity: 1;
+}
+
+body[data-theme="n64"] .fx-gridlines {
+  background-image:
+    linear-gradient(rgba(90,150,255,0.22) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(90,150,255,0.22) 2px, transparent 2px);
+  background-size: 42px 42px;
+  transform: perspective(500px) rotateX(64deg) scale(1.4);
+  transform-origin: center bottom;
+  top: 35%;
+}
+
+body[data-theme="n64"] .fx-stars {
+  background-image:
+    radial-gradient(circle at 10% 14%, rgba(255,255,255,0.9) 0 2px, transparent 4px),
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.7) 0 2px, transparent 4px),
+    radial-gradient(circle at 48% 10%, rgba(255,255,255,0.9) 0 2px, transparent 4px),
+    radial-gradient(circle at 70% 24%, rgba(255,255,255,0.8) 0 2px, transparent 4px),
+    radial-gradient(circle at 86% 12%, rgba(255,255,255,0.75) 0 2px, transparent 4px);
+}
+
+body[data-theme="n64"] .bg-layer {
+  background:
+    radial-gradient(circle at top center, rgba(70,120,255,0.18), transparent 24%),
+    linear-gradient(180deg, #0b1230 0%, #12102c 48%, #090d17 100%);
+}
+
+body[data-theme="n64"] .topbar,
+body[data-theme="n64"] .sidebar,
+body[data-theme="n64"] .glass-strong {
+  box-shadow:
+    0 0 0 1px rgba(120,160,255,0.12),
+    0 24px 60px rgba(0,0,0,0.42),
+    0 0 40px rgba(90,150,255,0.08);
+}
+
+body[data-theme="retro"] .fx-gridlines,
+body[data-theme="retro"] .fx-stars {
+  opacity: 1;
+}
+
+body[data-theme="retro"] .fx-gridlines {
+  background-image:
+    linear-gradient(rgba(255,80,190,0.18) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(70,214,255,0.18) 2px, transparent 2px);
+  background-size: 44px 44px;
+  transform: perspective(500px) rotateX(66deg) scale(1.45);
+  transform-origin: center bottom;
+  top: 38%;
+}
+
+body[data-theme="retro"] .fx-stars {
+  background-image:
+    radial-gradient(circle at 12% 16%, rgba(255,255,255,0.85) 0 2px, transparent 4px),
+    radial-gradient(circle at 26% 10%, rgba(255,255,255,0.75) 0 2px, transparent 4px),
+    radial-gradient(circle at 46% 20%, rgba(255,255,255,0.88) 0 2px, transparent 4px),
+    radial-gradient(circle at 66% 12%, rgba(255,255,255,0.78) 0 2px, transparent 4px),
+    radial-gradient(circle at 86% 18%, rgba(255,255,255,0.82) 0 2px, transparent 4px);
+}
+
+body[data-theme="retro"] .bg-layer {
+  background:
+    radial-gradient(circle at top center, rgba(255,70,180,0.18), transparent 25%),
+    radial-gradient(circle at top right, rgba(70,214,255,0.14), transparent 20%),
+    linear-gradient(180deg, #1a0c28 0%, #0d1230 48%, #080c17 100%);
+}
+
+body[data-theme="retro"] .topbar,
+body[data-theme="retro"] .sidebar,
+body[data-theme="retro"] .glass-strong {
+  box-shadow:
+    0 0 0 1px rgba(255,110,210,0.12),
+    0 24px 60px rgba(0,0,0,0.42),
+    0 0 45px rgba(255,70,180,0.08);
+}
+
+/* font personality */
+body[data-theme="fantasy"] .topbar h1,
+body[data-theme="fantasy"] .hero-panel h2,
+body[data-theme="fantasy"] .theme-card h3 {
+  font-family: 'Cinzel', serif;
+}
+
+body[data-theme="n64"] .topbar h1,
+body[data-theme="n64"] .hero-panel h2,
+body[data-theme="n64"] .theme-card h3,
+body[data-theme="n64"] .nav-item {
+  font-family: 'Orbitron', sans-serif;
+}
+
+body[data-theme="retro"] .topbar h1,
+body[data-theme="retro"] .theme-card h3 {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.95em;
+}
+
+/* theme-specific buttons */
+body[data-theme="fantasy"] .primary-btn {
+  background: linear-gradient(135deg, #ffb36b, #d8a0ff 55%, #7cb4ff);
+}
+
+body[data-theme="romantic"] .primary-btn {
+  background: linear-gradient(135deg, #ff9ebb, #f0a8ff 55%, #a8c8ff);
+}
+
+body[data-theme="n64"] .primary-btn {
+  background: linear-gradient(135deg, #ff9a54, #64f1de 55%, #8aa1ff);
+}
+
+body[data-theme="retro"] .primary-btn {
+  background: linear-gradient(135deg, #ff5fa8, #9f7bff 55%, #46d6ff);
+}
+
+/* stronger card difference */
+body[data-theme="fantasy"] .glass {
+  background: rgba(20, 18, 26, 0.82);
+}
+
+body[data-theme="romantic"] .glass {
+  background: rgba(38, 18, 34, 0.84);
+}
+
+body[data-theme="n64"] .glass {
+  background: rgba(20, 26, 52, 0.84);
+}
+
+body[data-theme="retro"] .glass {
+  background: rgba(22, 16, 44, 0.84);
+}
+
+@keyframes fantasyEmbersDrift {
+  0% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-12px) translateX(6px); }
+  100% { transform: translateY(-26px) translateX(-4px); }
+}
+
+@keyframes fantasyDustFloat {
+  0% { transform: translateY(0) translateX(0); }
+  100% { transform: translateY(-22px) translateX(14px); }
+}
+
+@keyframes romanticPetalsFall {
+  0% { transform: translateY(-12px) translateX(0); }
+  50% { transform: translateY(8px) translateX(10px); }
+  100% { transform: translateY(26px) translateX(-8px); }
+}
