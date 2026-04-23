@@ -255,7 +255,7 @@ body[data-theme="retro"] .glass-strong {
 
 #app {
   position: relative;
-  z-index: 1;
+  z-index: 4;
 }
 
 .app-shell {
@@ -1431,7 +1431,7 @@ body[data-theme="retro"] .topbar {
 .toast-stack,
 .modal-backdrop {
   position: relative;
-  z-index: 2;
+  z-index: 4;
 }
 
 /* FANTASY */
@@ -1553,4 +1553,123 @@ body[data-theme="retro"] .fx-stars {
 @keyframes lovexpDustSoft {
   0% { transform: translateY(0) translateX(0); }
   100% { transform: translateY(14px) translateX(8px); }
+}
+
+/* ===== PARTICLE LAYER FIX ===== */
+
+/* background stays at the very back */
+.bg-layer,
+.bg-grid,
+.bg-orb {
+  z-index: 0 !important;
+}
+
+/* particles sit above the background */
+.theme-fx {
+  z-index: 1 !important;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* app shell stays above particles */
+#app {
+  position: relative;
+  z-index: 4;
+}
+
+/* toasts and modals stay on top of everything */
+.toast-stack,
+.modal-backdrop {
+  position: relative;
+  z-index: 30;
+}
+
+/* make glass panels slightly transparent so particles can be seen through them */
+.glass {
+  background: color-mix(in srgb, var(--surface) 82%, transparent) !important;
+}
+
+.glass-soft {
+  background: rgba(255,255,255,0.025) !important;
+}
+
+.glass-strong {
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.09),
+    rgba(255,255,255,0.03)
+  ) !important;
+}
+
+/* stronger visible particles */
+body[data-theme="fantasy"] .fx-embers,
+body[data-theme="fantasy"] .fx-dust {
+  opacity: 1 !important;
+}
+
+body[data-theme="romantic"] .fx-petals,
+body[data-theme="romantic"] .fx-dust {
+  opacity: 1 !important;
+}
+
+body[data-theme="n64"] .fx-gridlines,
+body[data-theme="n64"] .fx-stars {
+  opacity: 1 !important;
+}
+
+body[data-theme="retro"] .fx-gridlines,
+body[data-theme="retro"] .fx-stars {
+  opacity: 1 !important;
+}
+
+/* ===== LET PARTICLES SHOW THROUGH PANELS A LITTLE ===== */
+
+.sidebar,
+.topbar,
+.panel,
+.stat-card,
+.data-card,
+.theme-card,
+.auth-card,
+.auth-panel,
+.hero-panel,
+.section-toolbar {
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar::before,
+.topbar::before,
+.panel::before,
+.stat-card::before,
+.data-card::before,
+.theme-card::before,
+.auth-card::before,
+.auth-panel::before,
+.hero-panel::before,
+.section-toolbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.035),
+    rgba(255,255,255,0.015)
+  );
+  z-index: 0;
+}
+
+.sidebar > *,
+.topbar > *,
+.panel > *,
+.stat-card > *,
+.data-card > *,
+.theme-card > *,
+.auth-card > *,
+.auth-panel > *,
+.hero-panel > *,
+.section-toolbar > * {
+  position: relative;
+  z-index: 1;
 }
