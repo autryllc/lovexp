@@ -1183,54 +1183,51 @@ async function updateProfile(values) {
 async function leaveCouple() {
   try {
     if (!state.couple?.id) {
-      toast('No active couple', 'There is no active couple to leave.');
+      toast('No active couple', 'There is no active couple to reset.');
       return;
     }
 
     const confirmed = window.confirm(
-      'Leave this couple? This will archive the shared workspace and allow you to pair again later.'
+      'Reset this pairing for both partners? This will archive the shared workspace and allow both people to pair again later.'
     );
     if (!confirmed) return;
 
     const now = new Date().toISOString();
 
-    const { error: memberError } = await supabaseClient
+    const { error: membersError } = await supabaseClient
       .from('couple_members')
       .update({
         status: 'removed',
         left_at: now
       })
       .eq('couple_id', state.couple.id)
-      .eq('user_id', currentUserId());
-
-    if (memberError) throw memberError;
-
-    const { data: remainingActive, error: remainingError } = await supabaseClient
-      .from('couple_members')
-      .select('user_id')
-      .eq('couple_id', state.couple.id)
       .eq('status', 'active');
 
-    if (remainingError) throw remainingError;
+    if (membersError) throw membersError;
 
-    if (!remainingActive || remainingActive.length === 0) {
-      const { error: coupleError } = await supabaseClient
-        .from('couples')
-        .update({
-          status: 'ended',
-          ended_at: now,
-          ended_by_user_id: currentUserId()
-        })
-        .eq('id', state.couple.id);
+    const { error: coupleError } = await supabaseClient
+      .from('couples')
+      .update({
+        status: 'ended',
+        ended_at: now,
+        ended_by_user_id: currentUserId()
+      })
+      .eq('id', state.couple.id);
 
-      if (coupleError) throw coupleError;
-    }
+    if (coupleError) throw coupleError;
+
+    await createActivity(
+      'pairing',
+      `${currentUserName()} reset the pairing`,
+      'The couple was archived and both partners can pair again later.',
+      state.couple.id
+    );
 
     resetState();
-    await refreshAndRender('You left the couple. You can pair again anytime.');
+    await refreshAndRender('Pairing reset. Both users can pair again later.');
   } catch (err) {
     console.error(err);
-    toast('Could not leave couple', err.message || 'Something went wrong.');
+    toast('Could not reset pairing', err.message || 'Something went wrong.');
   }
 }
 
