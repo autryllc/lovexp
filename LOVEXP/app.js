@@ -274,10 +274,11 @@ async function loadAppData() {
     state.profile = await ensureProfile(state.authUser);
     state.activeTheme = state.profile.theme || 'fantasy';
 
-    const { data: memberRows, error: memberError } = await supabaseClient
-      .from('couple_members')
-      .select('couple_id, role')
-      .eq('user_id', currentUserId());
+   const { data: memberRows, error: memberError } = await supabaseClient
+  .from('couple_members')
+  .select('couple_id, role, status')
+  .eq('user_id', currentUserId())
+  .eq('status', 'active');
 
     if (memberError) throw memberError;
 
@@ -993,6 +994,11 @@ function renderSettings() {
 <div class="auth-note">
   Both partners can create items, approve tasks, redeem rewards, and see shared activity in the same couple space.
 </div>
+<div class="auth-note">
+  Leaving a couple will archive the shared workspace and let you pair again later.
+</div>
+<button class="ghost-btn danger-btn block" id="leaveCoupleBtn">Leave Couple</button>
+
         <div class="auth-note"><strong>Email:</strong> ${escapeHtml(
           state.profile?.email || state.authUser?.email || ''
         )}</div>
@@ -1151,6 +1157,9 @@ root.querySelectorAll('[data-item-edit]').forEach((btn) => {
     openEditModal(type, id);
   });
 });
+
+  root.querySelector('#leaveCoupleBtn')?.addEventListener('click', leaveCouple);
+  
   
 }
 
@@ -1171,6 +1180,62 @@ async function updateProfile(values) {
     toast('Save failed', err.message);
   }
 }
+
+async function leaveCouple() {
+  try {
+    if (!state.couple?.id) {
+      toast('No active couple', 'There is no active couple to leave.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      'Leave this couple? This will archive the shared workspace and allow you to pair again later.'
+    );
+    if (!confirmed) return;
+
+    const now = new Date().toISOString();
+
+    const { error: memberError } = await supabaseClient
+      .from('couple_members')
+      .update({
+        status: 'removed',
+        left_at: now
+      })
+      .eq('couple_id', state.couple.id)
+      .eq('user_id', currentUserId());
+
+    if (memberError) throw memberError;
+
+    const { data: remainingActive, error: remainingError } = await supabaseClient
+      .from('couple_members')
+      .select('user_id')
+      .eq('couple_id', state.couple.id)
+      .eq('status', 'active');
+
+    if (remainingError) throw remainingError;
+
+    if (!remainingActive || remainingActive.length === 0) {
+      const { error: coupleError } = await supabaseClient
+        .from('couples')
+        .update({
+          status: 'ended',
+          ended_at: now,
+          ended_by_user_id: currentUserId()
+        })
+        .eq('id', state.couple.id);
+
+      if (coupleError) throw coupleError;
+    }
+
+    resetState();
+    await refreshAndRender('You left the couple. You can pair again anytime.');
+  } catch (err) {
+    console.error(err);
+    toast('Could not leave couple', err.message || 'Something went wrong.');
+  }
+}
+
+
 
 async function createCoupleRecord() {
   try {
