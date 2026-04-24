@@ -19,11 +19,11 @@
 
   <div id="app"></div>
 
- <template id="logoTemplate">
-  <div class="logo-wrap">
-    <img src="Images/Website Header.png" alt="Love XP logo" class="app-logo" />
-  </div>
-</template>
+  <template id="logoTemplate">
+    <div class="logo-wrap">
+      <img src="Images/Website Header.png" alt="Love XP logo" class="app-logo" />
+    </div>
+  </template>
 
   <template id="authTemplate">
     <div class="auth-shell">
@@ -31,20 +31,18 @@
         <div class="auth-brand"></div>
         <div class="auth-copy">
           <span class="eyebrow">COUPLES APP</span>
-<h1>Turn everyday effort into rewards, teamwork, and fun.</h1>
-<p>Sign up, pair with your partner, send quests, complete tasks, earn XP, and redeem rewards together in one shared space.</p>
-<div class="feature-pills">
-  <span class="pill">Shared XP</span>
-  <span class="pill">Quests</span>
-  <span class="pill">Rewards</span>
-  <span class="pill">Themes</span>
-</div>
+          <h1>Turn everyday effort into rewards, teamwork, and fun.</h1>
+          <p>Sign up, pair with your partner, send quests, complete tasks, earn XP, and redeem rewards together in one shared space.</p>
+          <div class="feature-pills">
+            <span class="pill">Shared XP</span>
+            <span class="pill">Quests</span>
+            <span class="pill">Rewards</span>
+            <span class="pill">Themes</span>
+          </div>
         </div>
       </section>
 
       <section class="auth-card glass">
-        
-
         <div class="segmented">
           <button class="seg-btn active" data-auth-view="login">Log In</button>
           <button class="seg-btn" data-auth-view="signup">Sign Up</button>
@@ -64,8 +62,6 @@
           <label>Password<input type="password" name="password" placeholder="Create password" minlength="6" required></label>
           <button class="primary-btn block">Create account</button>
         </form>
-
-       
       </section>
     </div>
   </template>
@@ -120,15 +116,14 @@
     </div>
 
     <nav class="mobile-bottom-nav" id="mobileBottomNav">
-  <button data-mobile-view="dashboard">Home</button>
-  <button data-mobile-view="tasks">Tasks</button>
-  <button data-mobile-view="quests">Quests</button>
-  <button data-mobile-view="rewards">Rewards</button>
-  <button data-mobile-view="settings">Settings</button>
-</nav>
+      <button data-mobile-view="dashboard">Home</button>
+      <button data-mobile-view="tasks">Tasks</button>
+      <button data-mobile-view="quests">Quests</button>
+      <button data-mobile-view="rewards">Rewards</button>
+      <button data-mobile-view="settings">Settings</button>
+    </nav>
 
-<button class="fab-button" id="mobileFabBtn">+</button>
-    
+    <button class="fab-button" id="mobileFabBtn">+</button>
   </template>
 
   <div class="toast-stack" id="toastStack"></div>
