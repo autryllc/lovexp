@@ -170,6 +170,28 @@ function currentUserName() {
   return state.profile?.name || state.authUser?.email || 'You';
 }
 
+function getBadgeCounts() {
+  return {
+    dashboard:
+      state.tasks.filter((t) => t.status === 'pending_approval').length +
+      state.redemptions.filter(
+        (r) => r.status === 'pending' && r.fulfilled_by_user_id === currentUserId()
+      ).length,
+    pairing: 0,
+    tasks: state.tasks.filter((t) => t.status === 'pending_approval').length,
+    quests: state.quests.filter((q) =>
+      ['awaiting_accept', 'pending_approval'].includes(q.status)
+    ).length,
+    rewards: state.redemptions.filter(
+      (r) => r.status === 'pending' && r.fulfilled_by_user_id === currentUserId()
+    ).length,
+    reviews: state.reviews.filter((r) => r.status === 'open').length,
+    activity: 0,
+    themes: 0,
+    settings: 0
+  };
+}
+
 function resetState() {
   state.profile = null;
   state.partner = null;
@@ -274,11 +296,11 @@ async function loadAppData() {
     state.profile = await ensureProfile(state.authUser);
     state.activeTheme = state.profile.theme || 'fantasy';
 
-   const { data: memberRows, error: memberError } = await supabaseClient
-  .from('couple_members')
-  .select('couple_id, role, status')
-  .eq('user_id', currentUserId())
-  .eq('status', 'active');
+    const { data: memberRows, error: memberError } = await supabaseClient
+      .from('couple_members')
+      .select('couple_id, role, status')
+      .eq('user_id', currentUserId())
+      .eq('status', 'active');
 
     if (memberError) throw memberError;
 
@@ -409,8 +431,8 @@ function renderAuth() {
   const segBtns = [...app.querySelectorAll('.seg-btn')];
   const forms = {
     login: app.querySelector('#loginForm'),
-    signup: app.querySelector('#signupForm'),
-    };
+    signup: app.querySelector('#signupForm')
+  };
 
   segBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -479,7 +501,6 @@ function renderAuth() {
       ).trim();
     }
   });
-
 }
 
 function renderApp() {
@@ -490,14 +511,20 @@ function renderApp() {
 
   const nav = app.querySelector('#nav');
   const navItems = Object.keys(viewMeta);
+  const badgeCounts = getBadgeCounts();
 
   nav.innerHTML = navItems
-    .map(
-      (key) =>
-        `<button class="nav-item ${
+    .map((key) => {
+      const count = badgeCounts[key] || 0;
+      return `
+        <button class="nav-item ${
           state.currentView === key ? 'active' : ''
-        }" data-view="${key}">${viewMeta[key].title}</button>`
-    )
+        }" data-view="${key}">
+          <span>${viewMeta[key].title}</span>
+          ${count > 0 ? `<span class="nav-badge">${count}</span>` : ''}
+        </button>
+      `;
+    })
     .join('');
 
   nav.querySelectorAll('.nav-item').forEach((btn) => {
@@ -552,7 +579,7 @@ function renderApp() {
 
 function renderCurrentView() {
   if (state.loading) {
-return `<section class="panel glass"><h3>Loading…</h3><p class="muted">Syncing your latest activity.</p></section>`;
+    return `<section class="panel glass"><h3>Loading…</h3><p class="muted">Syncing your latest activity.</p></section>`;
   }
 
   switch (state.currentView) {
@@ -597,8 +624,8 @@ function renderDashboard() {
       <div>
         <span class="eyebrow">LIVE COUPLE PROTOTYPE</span>
         <h2>Level up everyday effort with shared points, quests, and rewards.</h2>
-<p class="muted">Stay on top of points, tasks, quests, rewards, and shared progress with your partner.</p>
-<div class="hero-actions">
+        <p class="muted">Stay on top of points, tasks, quests, rewards, and shared progress with your partner.</p>
+        <div class="hero-actions">
           <button class="primary-btn" data-open-modal="quest">Send Quick Quest</button>
           <button class="secondary-btn" data-view-jump="pairing">Manage Pairing</button>
         </div>
@@ -758,9 +785,9 @@ function renderPairing() {
                 state.partner?.name || 'Waiting for partner'
               )}</div>
               <div class="auth-note">
-  Leaving a couple will archive the shared workspace and let you pair again later.
-</div>
-<button class="ghost-btn danger-btn block" id="leaveCoupleBtn">Leave Couple</button>
+                Leaving a couple will archive the shared workspace and let you pair again later.
+              </div>
+              <button class="ghost-btn danger-btn block" id="leaveCoupleBtn">Leave Couple</button>
             `
             : `
               <div class="split-actions">
@@ -801,9 +828,8 @@ function itemCard(item, type) {
       : Number(item.points_value || item.point_cost || 0);
 
   const actions = [];
-  
-const isCreator = item.created_by_user_id === currentUserId();
-  
+  const isCreator = item.created_by_user_id === currentUserId();
+
   if (type === 'task') {
     if (item.assigned_to_user_id === currentUserId() && item.status === 'open') {
       actions.push(
@@ -857,14 +883,16 @@ const isCreator = item.created_by_user_id === currentUserId();
       `<button class="ghost-btn small" data-review-resolve="${item.id}">Resolve</button>`
     );
   }
-if (isCreator) {
-  actions.push(
-    `<button class="ghost-btn small" data-item-edit="${type}:${item.id}">Edit</button>`
-  );
-  actions.push(
-    `<button class="ghost-btn small danger-btn" data-item-delete="${type}:${item.id}">Delete</button>`
-  );
-}
+
+  if (isCreator) {
+    actions.push(
+      `<button class="ghost-btn small" data-item-edit="${type}:${item.id}">Edit</button>`
+    );
+    actions.push(
+      `<button class="ghost-btn small danger-btn" data-item-delete="${type}:${item.id}">Delete</button>`
+    );
+  }
+
   return `
     <article class="data-card glass">
       <div class="card-topline">
@@ -882,6 +910,7 @@ if (isCreator) {
             ? `<span class="tag">Category ${escapeHtml(item.category || 'Custom')}</span>`
             : `<span class="tag">Assigned to ${escapeHtml(assignedTo)}</span>`
         }
+        ${type === 'task' && item.auto_approve ? `<span class="tag">Auto approve</span>` : ''}
       </div>
       ${
         actions.length
@@ -995,9 +1024,9 @@ function renderSettings() {
 
       <article class="panel glass">
         <div class="panel-head"><h3>Account notes</h3></div>
-<div class="auth-note">
-  Both partners can create items, approve tasks, redeem rewards, and see shared activity in the same couple space.
-</div>
+        <div class="auth-note">
+          Both partners can create items, approve tasks, redeem rewards, and see shared activity in the same couple space.
+        </div>
         <div class="auth-note"><strong>Email:</strong> ${escapeHtml(
           state.profile?.email || state.authUser?.email || ''
         )}</div>
@@ -1087,7 +1116,11 @@ function bindViewEvents(root) {
 
   root.querySelectorAll('[data-theme-select]').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      await updateProfile({ theme: btn.dataset.themeSelect });
+      const nextTheme = btn.dataset.themeSelect;
+      state.activeTheme = nextTheme;
+      document.body.dataset.theme = nextTheme;
+      renderShell();
+      await updateProfile({ theme: nextTheme });
     });
   });
 
@@ -1143,29 +1176,32 @@ function bindViewEvents(root) {
       fulfillRewardRedemption(btn.dataset.fulfillReward)
     );
   });
-root.querySelectorAll('[data-item-delete]').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const [type, id] = btn.dataset.itemDelete.split(':');
-    deleteItem(type, id);
-  });
-});
 
-root.querySelectorAll('[data-item-edit]').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const [type, id] = btn.dataset.itemEdit.split(':');
-    openEditModal(type, id);
+  root.querySelectorAll('[data-item-delete]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const [type, id] = btn.dataset.itemDelete.split(':');
+      deleteItem(type, id);
+    });
   });
-});
+
+  root.querySelectorAll('[data-item-edit]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const [type, id] = btn.dataset.itemEdit.split(':');
+      openEditModal(type, id);
+    });
+  });
 
   root.querySelector('#leaveCoupleBtn')?.addEventListener('click', leaveCouple);
-  
-  
 }
 
 async function updateProfile(values) {
   try {
     const payload = { ...values };
-    if (payload.theme) state.activeTheme = payload.theme;
+
+    if (payload.theme) {
+      state.activeTheme = payload.theme;
+      document.body.dataset.theme = payload.theme;
+    }
 
     const { error } = await supabaseClient
       .from('profiles')
@@ -1247,8 +1283,6 @@ async function leaveCouple() {
   }
 }
 
-
-
 async function createCoupleRecord() {
   try {
     if (state.couple) {
@@ -1256,10 +1290,10 @@ async function createCoupleRecord() {
       return;
     }
 
-  const existingMembership = await safeSingle('couple_members', {
-  user_id: currentUserId(),
-  status: 'active'
-});
+    const existingMembership = await safeSingle('couple_members', {
+      user_id: currentUserId(),
+      status: 'active'
+    });
 
     if (existingMembership) {
       toast('Already paired', 'This account is already linked to a couple.');
@@ -1411,10 +1445,10 @@ async function joinCouple(e) {
       return;
     }
 
-  const existingMembership = await safeSingle('couple_members', {
-  user_id: currentUserId(),
-  status: 'active'
-});
+    const existingMembership = await safeSingle('couple_members', {
+      user_id: currentUserId(),
+      status: 'active'
+    });
 
     if (existingMembership) {
       toast('Already paired', 'This account is already linked to a couple.');
@@ -1422,11 +1456,11 @@ async function joinCouple(e) {
       return;
     }
 
-   const existingPartner = await safeSingle('couple_members', {
-  couple_id: couple.id,
-  user_id: currentUserId(),
-  status: 'active'
-});
+    const existingPartner = await safeSingle('couple_members', {
+      couple_id: couple.id,
+      user_id: currentUserId(),
+      status: 'active'
+    });
 
     if (existingPartner) {
       toast('Already joined', 'This account is already in that couple.');
@@ -1463,17 +1497,33 @@ async function updateTaskStatus(id, status) {
     const task = state.tasks.find((t) => t.id === id);
     if (!task) throw new Error('Task not found.');
 
+    const nextStatus =
+      status === 'pending_approval' && task.auto_approve ? 'approved' : status;
+
     const { error } = await supabaseClient
       .from('tasks')
-      .update({ status })
+      .update({ status: nextStatus })
       .eq('id', id);
 
     if (error) throw error;
 
+    if (nextStatus === 'approved') {
+      await adjustPoints(task.assigned_to_user_id, Number(task.points_value || 0));
+
+      await createActivity(
+        'task',
+        `${currentUserName()} completed task “${task.title}”`,
+        `${task.points_value} XP awarded automatically.`
+      );
+
+      await refreshAndRender('Task auto-approved and points awarded.');
+      return;
+    }
+
     await createActivity(
       'task',
       `${currentUserName()} updated task “${task.title}”`,
-      `Status changed to ${String(status).replaceAll('_', ' ')}.`
+      `Status changed to ${String(nextStatus).replaceAll('_', ' ')}.`
     );
 
     await refreshAndRender('Task updated.');
@@ -1731,12 +1781,10 @@ function onPrimaryAction() {
 function openModal(type) {
   const partnerId = state.partner?.id || '';
   const partnerName = state.partner?.name || 'Partner';
-  const meId = currentUserId() || '';
 
-  const assigneeOptions = [
-    { id: meId, label: 'You' },
-    ...(partnerId ? [{ id: partnerId, label: partnerName }] : [])
-  ];
+  const assigneeOptions = partnerId
+    ? [{ id: partnerId, label: partnerName }]
+    : [];
 
   const baseButtons = `
     <div class="modal-actions">
@@ -1759,11 +1807,18 @@ function openModal(type) {
         <label>Category<select name="category"><option>Chores</option><option>Errands</option><option>Romance</option><option>Support</option><option>Custom</option></select></label>
         <label>Recurrence<select name="recurrence_type"><option value="one_time">One-time</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select></label>
         <label>Due date<input name="due_date" type="datetime-local"></label>
+        <label>Auto approve on completion
+          <select name="auto_approve">
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+          </select>
+        </label>
         ${baseButtons}
       `,
       submit: async (data) => {
         const payload = {
           ...data,
+          auto_approve: data.auto_approve === 'true',
           couple_id: state.couple.id,
           created_by_user_id: currentUserId(),
           status: 'open'
@@ -1912,6 +1967,7 @@ function openModal(type) {
 
   document.getElementById('cancelModalBtn').onclick = closeModal;
 }
+
 function openEditModal(type, id) {
   const itemMap = {
     task: state.tasks.find((x) => x.id === id),
@@ -1928,12 +1984,10 @@ function openEditModal(type, id) {
 
   const partnerId = state.partner?.id || '';
   const partnerName = state.partner?.name || 'Partner';
-  const meId = currentUserId() || '';
 
-  const assigneeOptions = [
-    { id: meId, label: 'You' },
-    ...(partnerId ? [{ id: partnerId, label: partnerName }] : [])
-  ];
+  const assigneeOptions = partnerId
+    ? [{ id: partnerId, label: partnerName }]
+    : [];
 
   const baseButtons = `
     <div class="modal-actions">
@@ -1960,6 +2014,12 @@ function openEditModal(type, id) {
           <option value="weekly" ${item.recurrence_type === 'weekly' ? 'selected' : ''}>Weekly</option>
         </select></label>
         <label>Due date<input name="due_date" type="datetime-local" value="${item.due_date ? item.due_date.slice(0, 16) : ''}"></label>
+        <label>Auto approve on completion
+          <select name="auto_approve">
+            <option value="false" ${!item.auto_approve ? 'selected' : ''}>No</option>
+            <option value="true" ${item.auto_approve ? 'selected' : ''}>Yes</option>
+          </select>
+        </label>
         ${baseButtons}
       `
     },
@@ -2048,6 +2108,10 @@ async function updateItem(type, id, data) {
       review: 'value_reviews'
     };
 
+    if (type === 'task') {
+      data.auto_approve = data.auto_approve === 'true';
+    }
+
     const table = tableMap[type];
     if (!table) throw new Error('Unsupported item type.');
 
@@ -2077,13 +2141,38 @@ function closeModal() {
 }
 
 function bindMobileNav() {
-  document.querySelectorAll('[data-mobile-view]').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.mobileView === state.currentView);
+  const mobileBadgeCounts = {
+    dashboard:
+      state.tasks.filter((t) => t.status === 'pending_approval').length +
+      state.redemptions.filter(
+        (r) => r.status === 'pending' && r.fulfilled_by_user_id === currentUserId()
+      ).length,
+    tasks: state.tasks.filter((t) => t.status === 'pending_approval').length,
+    quests: state.quests.filter((q) =>
+      ['awaiting_accept', 'pending_approval'].includes(q.status)
+    ).length,
+    rewards: state.redemptions.filter(
+      (r) => r.status === 'pending' && r.fulfilled_by_user_id === currentUserId()
+    ).length,
+    settings: 0
+  };
 
-    btn.addEventListener('click', () => {
+  document.querySelectorAll('[data-mobile-view]').forEach((btn) => {
+    const view = btn.dataset.mobileView;
+    const label = btn.dataset.label || btn.textContent.trim();
+    const count = mobileBadgeCounts[view] || 0;
+
+    btn.dataset.label = label;
+    btn.classList.toggle('active', view === state.currentView);
+    btn.innerHTML = `
+      <span>${label}</span>
+      ${count > 0 ? `<span class="mobile-nav-badge">${count}</span>` : ''}
+    `;
+
+    btn.onclick = () => {
       state.currentView = btn.dataset.mobileView;
       renderApp();
-    });
+    };
   });
 
   const fab = document.getElementById('mobileFabBtn');
@@ -2167,7 +2256,6 @@ boot();
   window.addEventListener('resize', resize);
   resize();
 
-  /* ── Particle Configs ── */
   const configs = {
     fantasy: {
       spawn() {
@@ -2234,7 +2322,6 @@ boot();
         ctx.globalAlpha = p.life * p.opacity;
         ctx.translate(p.x + sx, p.y);
         ctx.rotate(p.rot);
-        // Draw a petal shape
         ctx.fillStyle = p.color;
         ctx.beginPath();
         ctx.moveTo(0, -p.size * 0.5);
@@ -2308,7 +2395,6 @@ boot();
       },
       draw(p) {
         ctx.save();
-        // Draw trail
         for (let i = 0; i < p.trail.length; i++) {
           const t = p.trail[i];
           const a = (i / p.trail.length) * p.life * 0.3;
@@ -2316,11 +2402,9 @@ boot();
           ctx.fillStyle = p.color;
           ctx.fillRect(t.x - p.size * 0.3, t.y - p.size * 0.3, p.size * 0.6, p.size * 0.6);
         }
-        // Draw head
         ctx.globalAlpha = p.life * 0.8;
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x - p.size * 0.5, p.y - p.size * 0.5, p.size, p.size);
-        // Glow
         ctx.shadowColor = p.color;
         ctx.shadowBlur = 8;
         ctx.fillRect(p.x - p.size * 0.5, p.y - p.size * 0.5, p.size, p.size);
@@ -2337,9 +2421,11 @@ boot();
     }
 
     const cfg = configs[currentTheme];
-    if (!cfg) { animId = requestAnimationFrame(update); return; }
+    if (!cfg) {
+      animId = requestAnimationFrame(update);
+      return;
+    }
 
-    // Spawn
     if (particles.length < MAX_PARTICLES && Math.random() < 0.15) {
       particles.push(cfg.spawn());
     }
@@ -2348,7 +2434,6 @@ boot();
 
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
-      // Retro trail
       if (p.trail) {
         p.trail.push({ x: p.x, y: p.y });
         if (p.trail.length > p.maxTrail) p.trail.shift();
