@@ -1169,3 +1169,127 @@ code { background: var(--glass-soft-bg); padding: 8px 10px; border-radius: var(-
     max-height: min(68vh, 620px);
   }
 }
+
+/* =====================================================
+   Clean themed desktop scrollbars
+   Inspired by minimalist slider-style scrollbars.
+   Desktop only to preserve the already-good mobile UX.
+   ===================================================== */
+:root {
+  --scrollbar-size: 10px;
+  --scrollbar-track: rgba(255,255,255,0.06);
+  --scrollbar-track-border: rgba(255,255,255,0.08);
+  --scrollbar-thumb: linear-gradient(180deg, color-mix(in srgb, var(--accent-c) 55%, white 10%), color-mix(in srgb, var(--accent-b) 55%, black 5%));
+  --scrollbar-thumb-solid: color-mix(in srgb, var(--accent-c) 55%, var(--accent-b) 45%);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--accent-a) 35%, var(--accent-c) 65%);
+  --scrollbar-shadow: 0 2px 10px rgba(0,0,0,0.22);
+}
+
+body[data-theme="fantasy"] {
+  --scrollbar-track: rgba(200,170,100,0.10);
+  --scrollbar-track-border: rgba(200,170,100,0.14);
+  --scrollbar-thumb-solid: color-mix(in srgb, var(--accent-a) 58%, var(--accent-c) 42%);
+  --scrollbar-thumb: linear-gradient(180deg, color-mix(in srgb, var(--accent-a) 70%, white 8%), color-mix(in srgb, var(--accent-c) 70%, black 8%));
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--accent-a) 78%, var(--accent-c) 22%);
+}
+
+body[data-theme="romantic"] {
+  --scrollbar-track: rgba(255,150,180,0.10);
+  --scrollbar-track-border: rgba(255,150,180,0.14);
+  --scrollbar-thumb-solid: color-mix(in srgb, var(--accent-a) 62%, var(--accent-b) 38%);
+  --scrollbar-thumb: linear-gradient(180deg, color-mix(in srgb, var(--accent-c) 30%, white 70%), color-mix(in srgb, var(--accent-a) 58%, var(--accent-b) 42%));
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--accent-a) 78%, var(--accent-b) 22%);
+}
+
+body[data-theme="n64"] {
+  --scrollbar-size: 11px;
+  --scrollbar-track: rgba(60,120,255,0.10);
+  --scrollbar-track-border: rgba(60,120,255,0.20);
+  --scrollbar-thumb-solid: color-mix(in srgb, var(--accent-c) 78%, white 22%);
+  --scrollbar-thumb: linear-gradient(180deg, color-mix(in srgb, var(--accent-c) 84%, white 16%), color-mix(in srgb, var(--accent-b) 68%, var(--accent-c) 32%));
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--accent-a) 22%, var(--accent-c) 78%);
+}
+
+body[data-theme="retro"] {
+  --scrollbar-track: rgba(255,255,255,0.08);
+  --scrollbar-track-border: rgba(255,255,255,0.16);
+  --scrollbar-thumb-solid: color-mix(in srgb, var(--accent-b) 54%, var(--accent-c) 46%);
+  --scrollbar-thumb: linear-gradient(180deg, color-mix(in srgb, var(--accent-c) 68%, white 14%), color-mix(in srgb, var(--accent-b) 62%, var(--accent-a) 38%));
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--accent-a) 42%, var(--accent-b) 58%);
+}
+
+@media (min-width: 901px) {
+  /* Firefox */
+  .modal,
+  #modalForm,
+  .shop-modal-layout,
+  .shop-detail-layout,
+  .main-content,
+  .content-area {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb-solid) transparent;
+  }
+
+  /* WebKit */
+  .modal::-webkit-scrollbar,
+  #modalForm::-webkit-scrollbar,
+  .shop-modal-layout::-webkit-scrollbar,
+  .shop-detail-layout::-webkit-scrollbar,
+  .main-content::-webkit-scrollbar,
+  .content-area::-webkit-scrollbar {
+    width: var(--scrollbar-size);
+    height: var(--scrollbar-size);
+  }
+
+  .modal::-webkit-scrollbar-track,
+  #modalForm::-webkit-scrollbar-track,
+  .shop-modal-layout::-webkit-scrollbar-track,
+  .shop-detail-layout::-webkit-scrollbar-track,
+  .main-content::-webkit-scrollbar-track,
+  .content-area::-webkit-scrollbar-track {
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border: 1px solid var(--scrollbar-track-border);
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.01);
+    margin: 8px 0;
+  }
+
+  .modal::-webkit-scrollbar-thumb,
+  #modalForm::-webkit-scrollbar-thumb,
+  .shop-modal-layout::-webkit-scrollbar-thumb,
+  .shop-detail-layout::-webkit-scrollbar-thumb,
+  .main-content::-webkit-scrollbar-thumb,
+  .content-area::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    box-shadow: var(--scrollbar-shadow);
+    min-height: 44px;
+  }
+
+  .modal::-webkit-scrollbar-thumb:hover,
+  #modalForm::-webkit-scrollbar-thumb:hover,
+  .shop-modal-layout::-webkit-scrollbar-thumb:hover,
+  .shop-detail-layout::-webkit-scrollbar-thumb:hover,
+  .main-content::-webkit-scrollbar-thumb:hover,
+  .content-area::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--scrollbar-thumb-hover), var(--scrollbar-thumb-solid));
+    background-clip: padding-box;
+  }
+
+  .modal::-webkit-scrollbar-corner,
+  #modalForm::-webkit-scrollbar-corner,
+  .shop-modal-layout::-webkit-scrollbar-corner,
+  .shop-detail-layout::-webkit-scrollbar-corner,
+  .main-content::-webkit-scrollbar-corner,
+  .content-area::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Make the main form scrollbar feel inset and premium */
+  #modalForm {
+    padding-right: 10px;
+    scrollbar-gutter: stable;
+  }
+}
