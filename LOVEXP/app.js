@@ -12,6 +12,40 @@ const themeLabels = {
   retro: 'Retro'
 };
 
+const shopItems = [
+  { category: 'Gift Cards', title: '$25 Restaurant Gift Card', description: 'Discounted date-night dining gift card.', price: '$22' },
+  { category: 'Dining', title: 'Dinner Reservation Deal', description: 'Special reservation perk for couples.', price: '$10 deposit' },
+  { category: 'Date Night', title: 'Movie Night Bundle', description: 'Tickets + snack combo bundle.', price: '$30' },
+  { category: 'Travel', title: 'Weekend Getaway Deal', description: 'Discounted couples stay package.', price: 'From $199' },
+  { category: 'Experiences', title: 'Mini Golf for Two', description: 'Discounted local activity option.', price: '$18' },
+  { category: 'Relaxation', title: 'Spa Credit', description: 'Couples massage or spa credit.', price: '$75' }
+];
+
+const quickTemplates = {
+  task: [
+    { title: 'Do the dishes', description: 'Handle dish cleanup after dinner.', points_value: 20, category: 'Chores' },
+    { title: 'Take out the trash', description: 'Bag and take trash out tonight.', points_value: 10, category: 'Chores' },
+    { title: 'Laundry reset', description: 'Wash, dry, and fold one full load.', points_value: 30, category: 'Chores' },
+    { title: 'Pack lunches', description: 'Prepare lunches for tomorrow.', points_value: 15, category: 'Support' },
+    { title: 'Tidy the living room', description: 'Quick room reset and pickup.', points_value: 15, category: 'Chores' }
+  ],
+  quest: [
+    { title: 'Coffee run', description: 'Bring me my favorite drink on the way home.', points_value: 15, bonus_points: 10, priority: 'normal' },
+    { title: 'Snack rescue', description: 'Grab my favorite snack while you’re out.', points_value: 10, bonus_points: 5, priority: 'low' },
+    { title: 'Gas up the car', description: 'Please fill up the car today.', points_value: 20, bonus_points: 10, priority: 'urgent' },
+    { title: 'Pick up dinner', description: 'Grab dinner for tonight.', points_value: 25, bonus_points: 10, priority: 'normal' },
+    { title: 'Medicine pickup', description: 'Pick up the prescription today.', points_value: 25, bonus_points: 15, priority: 'urgent' }
+  ],
+  reward: [
+    { title: '30-minute massage', description: 'Phone down, full focus massage.', point_cost: 120, category: 'Relaxation' },
+    { title: 'Date night choice', description: 'You choose the date night plan.', point_cost: 180, category: 'Date Night' },
+    { title: 'Favorite meal request', description: 'Request your favorite homemade meal.', point_cost: 100, category: 'Food' },
+    { title: 'Movie night pick', description: 'Pick the movie, snacks, and setup.', point_cost: 90, category: 'Quality Time' },
+    { title: 'Sleep-in morning', description: 'Extra rest while partner handles the morning.', point_cost: 140, category: 'Relaxation' }
+  ]
+};
+
+
 const viewMeta = {
   dashboard: {
     title: 'Dashboard',
@@ -922,33 +956,183 @@ function itemCard(item, type) {
 }
 
 function renderTasks() {
-  return sectionWithEmpty(
-    'Tasks',
-    'Build recurring chores and one-time acts of service.',
-    state.tasks,
-    'No tasks yet. Create the first one.',
-    state.tasks.map((t) => itemCard(t, 'task')).join('')
+  const activeTasks = state.tasks.filter((t) =>
+    ['open', 'pending_approval'].includes(t.status)
   );
+  const completedTasks = state.tasks.filter((t) =>
+    ['approved'].includes(t.status)
+  );
+
+  return `
+    <section class="glass section-toolbar">
+      <div>
+        <h2>Tasks</h2>
+        <p class="muted">Build recurring chores and one-time acts of service.</p>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel glass">
+        <div class="panel-head">
+          <h3>Need to Do</h3>
+          <button class="ghost-btn small" data-open-modal="task">+ New Task</button>
+        </div>
+        ${
+          activeTasks.length
+            ? `<section class="content-grid two-col">${activeTasks
+                .map((t) => itemCard(t, 'task'))
+                .join('')}</section>`
+            : `<div class="auth-note">No active tasks right now.</div>`
+        }
+      </article>
+
+      <article class="panel glass">
+        <div class="panel-head">
+          <h3>Completed</h3>
+        </div>
+        ${
+          completedTasks.length
+            ? `<section class="content-grid two-col">${completedTasks
+                .map((t) => itemCard(t, 'task'))
+                .join('')}</section>`
+            : `<div class="auth-note">No completed tasks yet.</div>`
+        }
+      </article>
+    </section>
+  `;
+}
+
+function renderTasks() {
+  const activeTasks = state.tasks.filter((t) =>
+    ['open', 'pending_approval'].includes(t.status)
+  );
+  const completedTasks = state.tasks.filter((t) =>
+    ['approved'].includes(t.status)
+  );
+
+  return `
+    <section class="glass section-toolbar">
+      <div>
+        <h2>Tasks</h2>
+        <p class="muted">Build recurring chores and one-time acts of service.</p>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel glass">
+        <div class="panel-head">
+          <h3>Need to Do</h3>
+          <div class="split-actions">
+            <button class="ghost-btn small" data-open-quick-add="task">Quick Add</button>
+            <button class="ghost-btn small" data-open-reuse="task">Reuse Previous</button>
+            <button class="ghost-btn small" data-open-modal="task">+ New Task</button>
+          </div>
+        </div>
+        ${
+          activeTasks.length
+            ? `<section class="content-grid two-col">${activeTasks
+                .map((t) => itemCard(t, 'task'))
+                .join('')}</section>`
+            : `<div class="auth-note">No active tasks right now.</div>`
+        }
+      </article>
+
+      <article class="panel glass">
+        <div class="panel-head">
+          <h3>Completed</h3>
+        </div>
+        ${
+          completedTasks.length
+            ? `<section class="content-grid two-col">${completedTasks
+                .map((t) => itemCard(t, 'task'))
+                .join('')}</section>`
+            : `<div class="auth-note">No completed tasks yet.</div>`
+        }
+      </article>
+    </section>
+  `;
 }
 
 function renderQuests() {
-  return sectionWithEmpty(
-    'Quests',
-    'Immediate requests with a bonus-point twist.',
-    state.quests,
-    'No quests yet. Send your first one.',
-    state.quests.map((q) => itemCard(q, 'quest')).join('')
+  const activeQuests = state.quests.filter((q) =>
+    ['awaiting_accept', 'accepted', 'pending_approval'].includes(q.status)
   );
+  const completedQuests = state.quests.filter((q) =>
+    ['approved'].includes(q.status)
+  );
+
+  return `
+    <section class="glass section-toolbar">
+      <div>
+        <h2>Quests</h2>
+        <p class="muted">Immediate requests with a bonus-point twist.</p>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel glass">
+        <div class="panel-head">
+          <h3>Need to Do</h3>
+          <div class="split-actions">
+            <button class="ghost-btn small" data-open-quick-add="quest">Quick Add</button>
+            <button class="ghost-btn small" data-open-reuse="quest">Reuse Previous</button>
+            <button class="ghost-btn small" data-open-modal="quest">+ New Quest</button>
+          </div>
+        </div>
+        ${
+          activeQuests.length
+            ? `<section class="content-grid two-col">${activeQuests
+                .map((q) => itemCard(q, 'quest'))
+                .join('')}</section>`
+            : `<div class="auth-note">No active quests right now.</div>`
+        }
+      </article>
+
+      <article class="panel glass">
+        <div class="panel-head">
+          <h3>Completed</h3>
+        </div>
+        ${
+          completedQuests.length
+            ? `<section class="content-grid two-col">${completedQuests
+                .map((q) => itemCard(q, 'quest'))
+                .join('')}</section>`
+            : `<div class="auth-note">No completed quests yet.</div>`
+        }
+      </article>
+    </section>
+  `;
 }
 
 function renderRewards() {
-  return sectionWithEmpty(
-    'Rewards',
-    'Turn points into date nights, massages, and other fun perks.',
-    state.rewards,
-    'No rewards yet. Add a reward to test redemption.',
-    state.rewards.map((r) => itemCard(r, 'reward')).join('')
-  );
+  return `
+    <section class="glass section-toolbar">
+      <div>
+        <h2>Rewards</h2>
+        <p class="muted">Turn points into date nights, massages, and other fun perks.</p>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel glass">
+        <div class="panel-head">
+          <h3>Custom Rewards</h3>
+          <div class="split-actions">
+            <button class="ghost-btn small" data-open-quick-add="reward">Quick Add</button>
+            <button class="ghost-btn small" data-open-shop="true">Open Shop</button>
+            <button class="ghost-btn small" data-open-modal="reward">+ New Reward</button>
+          </div>
+        </div>
+        ${
+          state.rewards.length
+            ? `<section class="content-grid two-col">${state.rewards
+                .map((r) => itemCard(r, 'reward'))
+                .join('')}</section>`
+            : `<div class="auth-note">No rewards yet. Add one to get started.</div>`
+        }
+      </article>
+    </section>
+  `;
 }
 
 function renderReviews() {
@@ -1114,6 +1298,18 @@ function bindViewEvents(root) {
     btn.addEventListener('click', () => openModal(btn.dataset.openModal));
   });
 
+  root.querySelectorAll('[data-open-quick-add]').forEach((btn) => {
+  btn.addEventListener('click', () => openQuickAddModal(btn.dataset.openQuickAdd));
+});
+
+root.querySelectorAll('[data-open-reuse]').forEach((btn) => {
+  btn.addEventListener('click', () => openReuseModal(btn.dataset.openReuse));
+});
+
+root.querySelectorAll('[data-open-shop]').forEach((btn) => {
+  btn.addEventListener('click', () => openShopModal());
+});
+
   root.querySelectorAll('[data-theme-select]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const nextTheme = btn.dataset.themeSelect;
@@ -1193,6 +1389,8 @@ function bindViewEvents(root) {
 
   root.querySelector('#leaveCoupleBtn')?.addEventListener('click', leaveCouple);
 }
+
+
 
 async function updateProfile(values) {
   try {
@@ -1778,7 +1976,7 @@ function onPrimaryAction() {
   }
 }
 
-function openModal(type) {
+function openModal(type, preset = null) {
   const partnerId = state.partner?.id || '';
   const partnerName = state.partner?.name || 'Partner';
 
@@ -1840,17 +2038,30 @@ function openModal(type) {
     quest: {
       title: 'Create quest',
       subtitle: 'Send an immediate request with optional bonus points.',
-      html: `
-        <label>Title<input name="title" required placeholder="Coffee Run"></label>
-        <label>Base XP<input name="points_value" type="number" min="1" value="15" required></label>
-        <label class="field-full">Message<textarea name="description" placeholder="Bring me an iced coffee on your way home."></textarea></label>
-        <label>Assign to<select name="assigned_to_user_id">${assigneeOptions
-          .map((o) => `<option value="${o.id}">${o.label}</option>`)
-          .join('')}</select></label>
-        <label>Bonus XP<input name="bonus_points" type="number" min="0" value="10"></label>
-        <label>Priority<select name="priority"><option>normal</option><option>urgent</option><option>low</option></select></label>
-        <label>Due at<input name="due_at" type="datetime-local"></label>
-        ${baseButtons}
+     html: `
+  <label>Title<input name="title" required placeholder="Do the dishes" value="${escapeHtml(preset?.title || '')}"></label>
+  <label>Points<input name="points_value" type="number" min="1" value="${Number(preset?.points_value || 20)}" required></label>
+  <label class="field-full">Description<textarea name="description" placeholder="Handle kitchen cleanup after dinner.">${escapeHtml(preset?.description || '')}</textarea></label>
+  <label>Assign to<select name="assigned_to_user_id">${assigneeOptions
+    .map((o) => `<option value="${o.id}">${o.label}</option>`)
+    .join('')}</select></label>
+  <label>Category<select name="category">
+    <option ${preset?.category === 'Chores' ? 'selected' : ''}>Chores</option>
+    <option ${preset?.category === 'Errands' ? 'selected' : ''}>Errands</option>
+    <option ${preset?.category === 'Romance' ? 'selected' : ''}>Romance</option>
+    <option ${preset?.category === 'Support' ? 'selected' : ''}>Support</option>
+    <option ${preset?.category === 'Custom' ? 'selected' : ''}>Custom</option>
+  </select></label>
+  <label>Recurrence<select name="recurrence_type"><option value="one_time">One-time</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select></label>
+  <label>Due date<input name="due_date" type="datetime-local"></label>
+  <label>Auto approve on completion
+    <select name="auto_approve">
+      <option value="false">No</option>
+      <option value="true">Yes</option>
+    </select>
+  </label>
+  ${baseButtons}
+`
       `,
       submit: async (data) => {
         const payload = {
@@ -1968,6 +2179,151 @@ function openModal(type) {
   document.getElementById('cancelModalBtn').onclick = closeModal;
 }
 
+function openQuickAddModal(type) {
+  const items = quickTemplates[type] || [];
+  if (!items.length) {
+    toast('No suggestions', 'No templates available for this type yet.');
+    return;
+  }
+
+  modalTitle.textContent = `Quick Add ${type.charAt(0).toUpperCase() + type.slice(1)}s`;
+  modalSubtitle.textContent = 'Choose a suggestion, then edit it before saving.';
+  modalForm.innerHTML = `
+    <div class="helper-full quick-add-list">
+      ${items
+        .map(
+          (item, index) => `
+            <button type="button" class="ghost-btn quick-add-item" data-quick-template="${type}:${index}">
+              <strong>${escapeHtml(item.title)}</strong>
+              <div class="muted small">${escapeHtml(item.description || '')}</div>
+            </button>
+          `
+        )
+        .join('')}
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="secondary-btn" id="cancelModalBtn">Close</button>
+    </div>
+  `;
+  modalBackdrop.classList.remove('hidden');
+
+  document.querySelectorAll('[data-quick-template]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const [templateType, index] = btn.dataset.quickTemplate.split(':');
+      const template = quickTemplates[templateType]?.[Number(index)];
+      closeModal();
+      openModal(templateType, template);
+    });
+  });
+
+  document.getElementById('cancelModalBtn').onclick = closeModal;
+}
+
+function openReuseModal(type) {
+  const sourceMap = {
+    task: state.tasks,
+    quest: state.quests
+  };
+
+  const items = (sourceMap[type] || []).filter(
+    (item) => item.created_by_user_id === currentUserId()
+  );
+
+  if (!items.length) {
+    toast('Nothing to reuse', `You have not created any ${type}s yet.`);
+    return;
+  }
+
+  modalTitle.textContent = `Reuse Previous ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+  modalSubtitle.textContent = 'Choose a previous item to duplicate and edit.';
+  modalForm.innerHTML = `
+    <div class="helper-full quick-add-list">
+      ${items
+        .map(
+          (item) => `
+            <button type="button" class="ghost-btn quick-add-item" data-reuse-item="${type}:${item.id}">
+              <strong>${escapeHtml(item.title)}</strong>
+              <div class="muted small">${escapeHtml(item.description || '')}</div>
+            </button>
+          `
+        )
+        .join('')}
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="secondary-btn" id="cancelModalBtn">Close</button>
+    </div>
+  `;
+  modalBackdrop.classList.remove('hidden');
+
+  document.querySelectorAll('[data-reuse-item]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const [reuseType, id] = btn.dataset.reuseItem.split(':');
+      const item = sourceMap[reuseType].find((x) => x.id === id);
+      if (!item) return;
+
+      const preset =
+        reuseType === 'task'
+          ? {
+              title: item.title,
+              description: item.description,
+              points_value: item.points_value,
+              category: item.category
+            }
+          : {
+              title: item.title,
+              description: item.description,
+              points_value: item.points_value,
+              bonus_points: item.bonus_points,
+              priority: item.priority
+            };
+
+      closeModal();
+      openModal(reuseType, preset);
+    });
+  });
+
+  document.getElementById('cancelModalBtn').onclick = closeModal;
+}
+function openShopModal() {
+  const categories = [...new Set(shopItems.map((item) => item.category))];
+
+  modalTitle.textContent = 'Love XP Shop';
+  modalSubtitle.textContent = 'Demo marketplace for discounted gift cards, date nights, trips, and more.';
+  modalForm.innerHTML = `
+    <div class="helper-full shop-groups">
+      ${categories
+        .map(
+          (category) => `
+            <div class="shop-group">
+              <h3>${escapeHtml(category)}</h3>
+              <div class="shop-grid">
+                ${shopItems
+                  .filter((item) => item.category === category)
+                  .map(
+                    (item) => `
+                      <div class="shop-card glass-soft">
+                        <strong>${escapeHtml(item.title)}</strong>
+                        <div class="muted small">${escapeHtml(item.description)}</div>
+                        <div class="shop-price">${escapeHtml(item.price)}</div>
+                        <button type="button" class="ghost-btn small">View Offer</button>
+                      </div>
+                    `
+                  )
+                  .join('')}
+              </div>
+            </div>
+          `
+        )
+        .join('')}
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="secondary-btn" id="cancelModalBtn">Close</button>
+    </div>
+  `;
+  modalBackdrop.classList.remove('hidden');
+  document.getElementById('cancelModalBtn').onclick = closeModal;
+}
+
 function openEditModal(type, id) {
   const itemMap = {
     task: state.tasks.find((x) => x.id === id),
@@ -2028,20 +2384,21 @@ function openEditModal(type, id) {
       title: 'Edit quest',
       subtitle: 'Update your quest details.',
       html: `
-        <label>Title<input name="title" required value="${escapeHtml(item.title || '')}"></label>
-        <label>Base XP<input name="points_value" type="number" min="1" value="${Number(item.points_value || 1)}" required></label>
-        <label class="field-full">Message<textarea name="description">${escapeHtml(item.description || '')}</textarea></label>
-        <label>Assign to<select name="assigned_to_user_id">${assigneeOptions
-          .map((o) => `<option value="${o.id}" ${item.assigned_to_user_id === o.id ? 'selected' : ''}>${o.label}</option>`)
-          .join('')}</select></label>
-        <label>Bonus XP<input name="bonus_points" type="number" min="0" value="${Number(item.bonus_points || 0)}"></label>
-        <label>Priority<select name="priority">
-          <option value="normal" ${item.priority === 'normal' ? 'selected' : ''}>Normal</option>
-          <option value="urgent" ${item.priority === 'urgent' ? 'selected' : ''}>Urgent</option>
-          <option value="low" ${item.priority === 'low' ? 'selected' : ''}>Low</option>
-        </select></label>
-        <label>Due at<input name="due_at" type="datetime-local" value="${item.due_at ? item.due_at.slice(0, 16) : ''}"></label>
-        ${baseButtons}
+  <label>Title<input name="title" required placeholder="Coffee Run" value="${escapeHtml(preset?.title || '')}"></label>
+  <label>Base XP<input name="points_value" type="number" min="1" value="${Number(preset?.points_value || 15)}" required></label>
+  <label class="field-full">Message<textarea name="description" placeholder="Bring me an iced coffee on your way home.">${escapeHtml(preset?.description || '')}</textarea></label>
+  <label>Assign to<select name="assigned_to_user_id">${assigneeOptions
+    .map((o) => `<option value="${o.id}">${o.label}</option>`)
+    .join('')}</select></label>
+  <label>Bonus XP<input name="bonus_points" type="number" min="0" value="${Number(preset?.bonus_points || 10)}"></label>
+  <label>Priority<select name="priority">
+    <option value="normal" ${preset?.priority === 'normal' ? 'selected' : ''}>normal</option>
+    <option value="urgent" ${preset?.priority === 'urgent' ? 'selected' : ''}>urgent</option>
+    <option value="low" ${preset?.priority === 'low' ? 'selected' : ''}>low</option>
+  </select></label>
+  <label>Due at<input name="due_at" type="datetime-local"></label>
+  ${baseButtons}
+`
       `
     },
 
@@ -2049,12 +2406,19 @@ function openEditModal(type, id) {
       title: 'Edit reward',
       subtitle: 'Update your reward details.',
       html: `
-        <label>Title<input name="title" required value="${escapeHtml(item.title || '')}"></label>
-        <label>Cost<input name="point_cost" type="number" min="1" value="${Number(item.point_cost || 1)}" required></label>
-        <label class="field-full">Description<textarea name="description">${escapeHtml(item.description || '')}</textarea></label>
-        <label>Category<input name="category" value="${escapeHtml(item.category || '')}"></label>
-        <label>Cooldown days<input name="cooldown_days" type="number" min="0" value="${Number(item.cooldown_days || 0)}"></label>
-        ${baseButtons}
+  <label>Title<input name="title" required placeholder="30-minute massage" value="${escapeHtml(preset?.title || '')}"></label>
+  <label>Cost<input name="point_cost" type="number" min="1" value="${Number(preset?.point_cost || 120)}" required></label>
+  <label class="field-full">Description<textarea name="description" placeholder="Phone down, full focus.">${escapeHtml(preset?.description || '')}</textarea></label>
+  <label>Category<select name="category">
+    <option ${preset?.category === 'Relaxation' ? 'selected' : ''}>Relaxation</option>
+    <option ${preset?.category === 'Date Night' ? 'selected' : ''}>Date Night</option>
+    <option ${preset?.category === 'Food' ? 'selected' : ''}>Food</option>
+    <option ${preset?.category === 'Quality Time' ? 'selected' : ''}>Quality Time</option>
+    <option ${preset?.category === 'Custom' ? 'selected' : ''}>Custom</option>
+  </select></label>
+  <label>Cooldown days<input name="cooldown_days" type="number" min="0" value="0"></label>
+  ${baseButtons}
+`
       `
     },
 
