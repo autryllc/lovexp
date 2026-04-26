@@ -901,3 +901,49 @@ code { background: var(--glass-soft-bg); padding: 8px 10px; border-radius: var(-
   .brand-title { font-size: 1.3rem; }
   #modalForm { grid-template-columns: 1fr; }
 }
+
+.quick-add-list,
+.shop-groups {
+  display: grid;
+  gap: 14px;
+}
+
+.quick-add-item {
+  text-align: left;
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+}
+
+.shop-group {
+  display: grid;
+  gap: 10px;
+}
+
+.shop-group h3 {
+  margin: 0;
+}
+
+.shop-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.shop-card {
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+  border-radius: var(--radius-sm);
+}
+
+.shop-price {
+  font-weight: 800;
+  color: var(--accent-c);
+}
+
+@media (max-width: 900px) {
+  .shop-grid {
+    grid-template-columns: 1fr;
+  }
+}
