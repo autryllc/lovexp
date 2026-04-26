@@ -12,19 +12,19 @@ const themeLabels = {
   retro: 'Retro'
 };
 
-const shopItems = [
-  { category: 'Gift Cards', title: '$25 Restaurant Gift Card', description: 'Discounted date-night dining gift card.', price: '$22' },
-  { category: 'Gift Cards', title: '$50 Coffee Shop Bundle', description: 'Use toward coffee dates and treats.', price: '$44' },
-  { category: 'Dining', title: 'Dinner Reservation Deal', description: 'Special reservation perk for couples.', price: '$10 deposit' },
-  { category: 'Dining', title: 'Brunch for Two', description: 'Discounted brunch experience idea.', price: '$28' },
-  { category: 'Date Night', title: 'Movie Night Bundle', description: 'Tickets + snack combo bundle.', price: '$30' },
-  { category: 'Date Night', title: 'Arcade Date Pack', description: 'Tokens and drinks for a fun night out.', price: '$24' },
-  { category: 'Travel', title: 'Weekend Getaway Deal', description: 'Discounted couples stay package.', price: 'From $199' },
-  { category: 'Travel', title: 'Road Trip Hotel Credit', description: 'Starter deal for an overnight getaway.', price: '$79' },
-  { category: 'Experiences', title: 'Mini Golf for Two', description: 'Discounted local activity option.', price: '$18' },
-  { category: 'Experiences', title: 'Escape Room Entry', description: 'Couples challenge night.', price: '$36' },
-  { category: 'Relaxation', title: 'Spa Credit', description: 'Couples massage or spa credit.', price: '$75' },
-  { category: 'Relaxation', title: 'Self-Care Box', description: 'Candles, oils, and bath items.', price: '$32' }
+const fallbackShopCategories = [
+  { id: 'gift-cards', slug: 'gift-cards', name: 'Gift Cards', sort_order: 10 },
+  { id: 'dining', slug: 'dining', name: 'Dining', sort_order: 20 },
+  { id: 'date-night', slug: 'date-night', name: 'Date Night', sort_order: 30 },
+  { id: 'travel', slug: 'travel', name: 'Travel', sort_order: 40 },
+  { id: 'experiences', slug: 'experiences', name: 'Experiences', sort_order: 50 },
+  { id: 'relaxation', slug: 'relaxation', name: 'Relaxation', sort_order: 60 }
+];
+
+const fallbackShopItems = [
+  { id: 'demo-1', category_slug: 'gift-cards', title: '$25 Restaurant Gift Card', short_description: 'Discounted date-night dining gift card.', full_description: 'A placeholder offer you can replace with a real Supabase shop item.', price_label: '$22', business_name: 'LOVEXP Demo', badge_text: 'Demo', is_featured: true, is_sponsored: false, featured_rank: 10, category_rank: 10, cta_label: 'View Website', cta_url: '' },
+  { id: 'demo-2', category_slug: 'date-night', title: 'Movie Night Bundle', short_description: 'Tickets + snack combo bundle.', full_description: 'A simple date-night offer example for testing the shop modal.', price_label: '$30', business_name: 'LOVEXP Demo', badge_text: 'Featured', is_featured: true, is_sponsored: true, featured_rank: 1, category_rank: 10, cta_label: 'View Website', cta_url: '' },
+  { id: 'demo-3', category_slug: 'relaxation', title: 'Spa Credit', short_description: 'Couples massage or spa credit.', full_description: 'A relaxation-style shop offer example.', price_label: '$75', business_name: 'LOVEXP Demo', badge_text: 'Sponsored', is_featured: false, is_sponsored: true, featured_rank: 20, category_rank: 10, cta_label: 'View Website', cta_url: '' }
 ];
 
 const quickTemplates = {
@@ -111,6 +111,9 @@ const state = {
   reviews: [],
   redemptions: [],
   activity: [],
+  shopCategories: [],
+  shopItems: [],
+  shopFilter: { search: '', category: 'all' },
   currentView: 'dashboard',
   activeTheme: 'fantasy',
   loading: false
@@ -328,12 +331,138 @@ async function adjustPoints(userId, delta) {
   if (error) throw error;
 }
 
+
+function scrollToTopAfterRender() {
+  requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    document.querySelector('.main-content')?.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    document.querySelector('.content-area')?.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  });
+}
+
+function setCurrentView(view) {
+  if (!viewMeta[view]) return;
+  state.currentView = view;
+  renderApp();
+  scrollToTopAfterRender();
+}
+
+function normalizeShopCategory(row = {}) {
+  return {
+    id: row.id,
+    slug: row.slug || row.id,
+    name: row.name || row.slug || 'Shop',
+    sort_order: Number(row.sort_order || 0),
+    is_active: row.is_active !== false
+  };
+}
+
+function normalizeShopItem(row = {}) {
+  const nestedCategory = row.shop_categories || row.category || null;
+  return {
+    ...row,
+    id: row.id,
+    category_id: row.category_id || nestedCategory?.id || row.category_slug || 'uncategorized',
+    category_slug: nestedCategory?.slug || row.category_slug || row.category_id || 'uncategorized',
+    category_name: nestedCategory?.name || row.category_name || 'Shop',
+    title: row.title || 'Untitled Offer',
+    short_description: row.short_description || row.description || '',
+    full_description: row.full_description || row.short_description || row.description || '',
+    price_label: row.price_label || row.price || '',
+    business_name: row.business_name || '',
+    sponsor_name: row.sponsor_name || '',
+    badge_text: row.badge_text || '',
+    image_url: row.image_url || '',
+    flyer_image_url: row.flyer_image_url || '',
+    cta_label: row.cta_label || 'Visit Website',
+    cta_url: row.cta_url || '',
+    is_featured: Boolean(row.is_featured),
+    is_sponsored: Boolean(row.is_sponsored),
+    featured_rank: Number(row.featured_rank || 999),
+    category_rank: Number(row.category_rank || 999),
+    is_active: row.is_active !== false
+  };
+}
+
+function shopBadge(item) {
+  if (item.badge_text) return item.badge_text;
+  if (item.is_sponsored && item.is_featured) return 'Sponsored Featured';
+  if (item.is_sponsored) return 'Sponsored';
+  if (item.is_featured) return 'Featured';
+  return '';
+}
+
+function sortedShopItems(items = []) {
+  return [...items].sort((a, b) => {
+    const aTier = a.is_sponsored && a.is_featured ? 0 : a.is_featured ? 1 : a.is_sponsored ? 2 : 3;
+    const bTier = b.is_sponsored && b.is_featured ? 0 : b.is_featured ? 1 : b.is_sponsored ? 2 : 3;
+    if (aTier !== bTier) return aTier - bTier;
+    if (a.featured_rank !== b.featured_rank) return a.featured_rank - b.featured_rank;
+    if (a.category_rank !== b.category_rank) return a.category_rank - b.category_rank;
+    return String(a.title).localeCompare(String(b.title));
+  });
+}
+
+function filteredShopItems() {
+  const search = String(state.shopFilter.search || '').trim().toLowerCase();
+  const category = state.shopFilter.category || 'all';
+
+  return sortedShopItems((state.shopItems.length ? state.shopItems : fallbackShopItems).filter((item) => {
+    const matchesCategory = category === 'all' || item.category_slug === category || item.category_id === category;
+    const haystack = [item.title, item.short_description, item.full_description, item.business_name, item.sponsor_name, item.price_label, item.category_name]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    const matchesSearch = !search || haystack.includes(search);
+    return item.is_active !== false && matchesCategory && matchesSearch;
+  }));
+}
+
+async function loadShopCatalog() {
+  if (!supabaseClient) {
+    state.shopCategories = fallbackShopCategories;
+    state.shopItems = fallbackShopItems;
+    return;
+  }
+
+  try {
+    const nowIso = new Date().toISOString();
+    const [categoriesResult, itemsResult] = await Promise.all([
+      supabaseClient
+        .from('shop_categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true }),
+      supabaseClient
+        .from('shop_items')
+        .select('*, shop_categories(id, slug, name, sort_order)')
+        .eq('is_active', true)
+        .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
+        .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
+    ]);
+
+    if (categoriesResult.error) throw categoriesResult.error;
+    if (itemsResult.error) throw itemsResult.error;
+
+    state.shopCategories = (categoriesResult.data || []).map(normalizeShopCategory);
+    state.shopItems = sortedShopItems((itemsResult.data || []).map(normalizeShopItem));
+  } catch (err) {
+    console.warn('Shop catalog unavailable. Using fallback demo offers.', err);
+    state.shopCategories = fallbackShopCategories;
+    state.shopItems = fallbackShopItems;
+  }
+}
+
+
 async function loadAppData() {
   state.loading = true;
 
   try {
     state.profile = await ensureProfile(state.authUser);
     state.activeTheme = state.profile.theme || 'fantasy';
+
+    await loadShopCatalog();
 
     const { data: memberRows, error: memberError } = await supabaseClient
       .from('couple_members')
@@ -567,10 +696,7 @@ function renderApp() {
     .join('');
 
   nav.querySelectorAll('.nav-item').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      state.currentView = btn.dataset.view;
-      renderApp();
-    });
+    btn.addEventListener('click', () => setCurrentView(btn.dataset.view));
   });
 
   app.querySelector('#userAvatar').textContent = initials(currentUserName());
@@ -1246,10 +1372,7 @@ function themeDescription(key) {
 
 function bindViewEvents(root) {
   root.querySelectorAll('[data-view-jump]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      state.currentView = btn.dataset.viewJump;
-      renderApp();
-    });
+    btn.addEventListener('click', () => setCurrentView(btn.dataset.viewJump));
   });
 
   root.querySelectorAll('[data-open-modal]').forEach((btn) => {
@@ -2038,43 +2161,146 @@ function openReuseModal(type) {
   document.getElementById('cancelModalBtn').onclick = closeModal;
 }
 
-function openShopModal() {
-  const categories = [...new Set(shopItems.map((item) => item.category))];
+function shopCard(item) {
+  const badge = shopBadge(item);
+  const image = item.image_url || item.flyer_image_url;
+  return `
+    <article class="shop-card glass-soft">
+      ${image ? `<img class="shop-card-image" src="${escapeHtml(image)}" alt="${escapeHtml(item.title)}">` : `<div class="shop-card-image placeholder">💕</div>`}
+      <div class="shop-card-body">
+        <div class="shop-card-head">
+          <div>
+            <strong>${escapeHtml(item.title)}</strong>
+            ${item.business_name ? `<div class="muted small">${escapeHtml(item.business_name)}</div>` : ''}
+          </div>
+          ${badge ? `<span class="shop-badge">${escapeHtml(badge)}</span>` : ''}
+        </div>
+        <div class="muted small">${escapeHtml(item.short_description)}</div>
+        <div class="shop-card-foot">
+          <div class="shop-price">${escapeHtml(item.price_label || 'View offer')}</div>
+          <button type="button" class="ghost-btn small" data-shop-details="${escapeHtml(item.id)}">View Details</button>
+        </div>
+      </div>
+    </article>
+  `;
+}
 
-  modalTitle.textContent = 'Love XP Shop';
-  modalSubtitle.textContent = 'Demo marketplace for discounted gift cards, date nights, trips, and more.';
-  modalForm.innerHTML = `
-    <div class="helper-full shop-groups">
-      ${categories
-        .map(
-          (category) => `
-            <div class="shop-group">
-              <h3>${escapeHtml(category)}</h3>
-              <div class="shop-grid">
-                ${shopItems
-                  .filter((item) => item.category === category)
-                  .map(
-                    (item) => `
-                      <div class="shop-card glass-soft">
-                        <strong>${escapeHtml(item.title)}</strong>
-                        <div class="muted small">${escapeHtml(item.description)}</div>
-                        <div class="shop-price">${escapeHtml(item.price)}</div>
-                        <button type="button" class="ghost-btn small">View Offer</button>
-                      </div>
-                    `
-                  )
-                  .join('')}
-              </div>
-            </div>
-          `
-        )
-        .join('')}
+function renderShopModalContent() {
+  const categories = (state.shopCategories.length ? state.shopCategories : fallbackShopCategories)
+    .filter((cat) => cat.is_active !== false)
+    .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
+  const items = filteredShopItems();
+  const featuredItems = items.filter((item) => item.is_featured || item.is_sponsored).slice(0, 6);
+  const category = state.shopFilter.category || 'all';
+
+  return `
+    <div class="helper-full shop-modal-layout">
+      <div class="shop-controls">
+        <label class="shop-search-label">
+          <span class="muted small">Search offers</span>
+          <input id="shopSearchInput" type="search" value="${escapeHtml(state.shopFilter.search || '')}" placeholder="Search dining, gifts, date nights...">
+        </label>
+        <div class="shop-category-row" aria-label="Shop categories">
+          <button type="button" class="shop-chip ${category === 'all' ? 'active' : ''}" data-shop-category="all">All</button>
+          ${categories
+            .map(
+              (cat) => `<button type="button" class="shop-chip ${category === cat.slug ? 'active' : ''}" data-shop-category="${escapeHtml(cat.slug)}">${escapeHtml(cat.name)}</button>`
+            )
+            .join('')}
+        </div>
+      </div>
+
+      ${featuredItems.length ? `
+        <section class="shop-group">
+          <div class="shop-section-title">
+            <h3>Featured Offers</h3>
+            <span class="muted small">Sponsored and featured partners show first.</span>
+          </div>
+          <div class="shop-grid featured-shop-grid">${featuredItems.map(shopCard).join('')}</div>
+        </section>
+      ` : ''}
+
+      <section class="shop-group">
+        <div class="shop-section-title">
+          <h3>All Offers</h3>
+          <span class="muted small">${items.length} active offer${items.length === 1 ? '' : 's'}</span>
+        </div>
+        ${items.length ? `<div class="shop-grid">${items.map(shopCard).join('')}</div>` : `<div class="auth-note">No shop offers match that search yet.</div>`}
+      </section>
     </div>
     <div class="modal-actions">
       <button type="button" class="secondary-btn" id="cancelModalBtn">Close</button>
     </div>
   `;
+}
+
+function bindShopModalEvents() {
+  const searchInput = document.getElementById('shopSearchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      state.shopFilter.search = e.target.value;
+      modalForm.innerHTML = renderShopModalContent();
+      bindShopModalEvents();
+      document.getElementById('shopSearchInput')?.focus();
+    });
+  }
+
+  modalForm.querySelectorAll('[data-shop-category]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.shopFilter.category = btn.dataset.shopCategory;
+      modalForm.innerHTML = renderShopModalContent();
+      bindShopModalEvents();
+    });
+  });
+
+  modalForm.querySelectorAll('[data-shop-details]').forEach((btn) => {
+    btn.addEventListener('click', () => openShopItemDetails(btn.dataset.shopDetails));
+  });
+
+  document.getElementById('cancelModalBtn').onclick = closeModal;
+}
+
+function openShopModal() {
+  modalTitle.textContent = 'Love XP Shop';
+  modalSubtitle.textContent = 'Browse Supabase-powered offers, featured sponsors, date nights, trips, and local deals.';
+  modalForm.innerHTML = renderShopModalContent();
   modalBackdrop.classList.remove('hidden');
+  bindShopModalEvents();
+}
+
+function openShopItemDetails(itemId) {
+  const item = (state.shopItems.length ? state.shopItems : fallbackShopItems).find((offer) => String(offer.id) === String(itemId));
+  if (!item) return;
+
+  const badge = shopBadge(item);
+  const flyer = item.flyer_image_url || item.image_url;
+  const safeCtaUrl = String(item.cta_url || '').trim();
+
+  modalTitle.textContent = item.title;
+  modalSubtitle.textContent = item.business_name || 'Shop offer details';
+  modalForm.innerHTML = `
+    <div class="helper-full shop-detail-layout">
+      ${flyer ? `<img class="shop-flyer-image" src="${escapeHtml(flyer)}" alt="${escapeHtml(item.title)} flyer">` : `<div class="shop-flyer-image placeholder">💕</div>`}
+      <div class="shop-detail-copy glass-soft">
+        <div class="shop-detail-topline">
+          ${badge ? `<span class="shop-badge">${escapeHtml(badge)}</span>` : ''}
+          ${item.price_label ? `<span class="shop-price">${escapeHtml(item.price_label)}</span>` : ''}
+        </div>
+        ${item.business_name ? `<h3>${escapeHtml(item.business_name)}</h3>` : ''}
+        <p>${escapeHtml(item.full_description || item.short_description || '')}</p>
+        ${item.sponsor_name ? `<p class="muted small">Sponsored by ${escapeHtml(item.sponsor_name)}</p>` : ''}
+        <div class="modal-actions inline-actions">
+          <button type="button" class="secondary-btn" id="backToShopBtn">Back to Shop</button>
+          ${safeCtaUrl ? `<a class="primary-btn shop-cta-link" href="${escapeHtml(safeCtaUrl)}" target="_blank" rel="noopener">${escapeHtml(item.cta_label || 'Visit Website')}</a>` : ''}
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="secondary-btn" id="cancelModalBtn">Close</button>
+    </div>
+  `;
+
+  document.getElementById('backToShopBtn')?.addEventListener('click', openShopModal);
   document.getElementById('cancelModalBtn').onclick = closeModal;
 }
 
@@ -2485,10 +2711,7 @@ function bindMobileNav() {
       ${count > 0 ? `<span class="mobile-nav-badge">${count}</span>` : ''}
     `;
 
-    btn.onclick = () => {
-      state.currentView = btn.dataset.mobileView;
-      renderApp();
-    };
+    btn.onclick = () => setCurrentView(btn.dataset.mobileView);
   });
 
   const fab = document.getElementById('mobileFabBtn');
