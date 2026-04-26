@@ -14,11 +14,17 @@ const themeLabels = {
 
 const shopItems = [
   { category: 'Gift Cards', title: '$25 Restaurant Gift Card', description: 'Discounted date-night dining gift card.', price: '$22' },
+  { category: 'Gift Cards', title: '$50 Coffee Shop Bundle', description: 'Use toward coffee dates and treats.', price: '$44' },
   { category: 'Dining', title: 'Dinner Reservation Deal', description: 'Special reservation perk for couples.', price: '$10 deposit' },
+  { category: 'Dining', title: 'Brunch for Two', description: 'Discounted brunch experience idea.', price: '$28' },
   { category: 'Date Night', title: 'Movie Night Bundle', description: 'Tickets + snack combo bundle.', price: '$30' },
+  { category: 'Date Night', title: 'Arcade Date Pack', description: 'Tokens and drinks for a fun night out.', price: '$24' },
   { category: 'Travel', title: 'Weekend Getaway Deal', description: 'Discounted couples stay package.', price: 'From $199' },
+  { category: 'Travel', title: 'Road Trip Hotel Credit', description: 'Starter deal for an overnight getaway.', price: '$79' },
   { category: 'Experiences', title: 'Mini Golf for Two', description: 'Discounted local activity option.', price: '$18' },
-  { category: 'Relaxation', title: 'Spa Credit', description: 'Couples massage or spa credit.', price: '$75' }
+  { category: 'Experiences', title: 'Escape Room Entry', description: 'Couples challenge night.', price: '$36' },
+  { category: 'Relaxation', title: 'Spa Credit', description: 'Couples massage or spa credit.', price: '$75' },
+  { category: 'Relaxation', title: 'Self-Care Box', description: 'Candles, oils, and bath items.', price: '$32' }
 ];
 
 const quickTemplates = {
@@ -30,7 +36,7 @@ const quickTemplates = {
     { title: 'Tidy the living room', description: 'Quick room reset and pickup.', points_value: 15, category: 'Chores' }
   ],
   quest: [
-    { title: 'Coffee run', description: 'Bring me my favorite drink on the way home.', points_value: 15, bonus_points: 10, priority: 'normal' },
+    { title: 'Coffee run', description: 'Bring me my favorite drink on your way home.', points_value: 15, bonus_points: 10, priority: 'normal' },
     { title: 'Snack rescue', description: 'Grab my favorite snack while you’re out.', points_value: 10, bonus_points: 5, priority: 'low' },
     { title: 'Gas up the car', description: 'Please fill up the car today.', points_value: 20, bonus_points: 10, priority: 'urgent' },
     { title: 'Pick up dinner', description: 'Grab dinner for tonight.', points_value: 25, bonus_points: 10, priority: 'normal' },
@@ -44,7 +50,6 @@ const quickTemplates = {
     { title: 'Sleep-in morning', description: 'Extra rest while partner handles the morning.', point_cost: 140, category: 'Relaxation' }
   ]
 };
-
 
 const viewMeta = {
   dashboard: {
@@ -975,53 +980,6 @@ function renderTasks() {
       <article class="panel glass">
         <div class="panel-head">
           <h3>Need to Do</h3>
-          <button class="ghost-btn small" data-open-modal="task">+ New Task</button>
-        </div>
-        ${
-          activeTasks.length
-            ? `<section class="content-grid two-col">${activeTasks
-                .map((t) => itemCard(t, 'task'))
-                .join('')}</section>`
-            : `<div class="auth-note">No active tasks right now.</div>`
-        }
-      </article>
-
-      <article class="panel glass">
-        <div class="panel-head">
-          <h3>Completed</h3>
-        </div>
-        ${
-          completedTasks.length
-            ? `<section class="content-grid two-col">${completedTasks
-                .map((t) => itemCard(t, 'task'))
-                .join('')}</section>`
-            : `<div class="auth-note">No completed tasks yet.</div>`
-        }
-      </article>
-    </section>
-  `;
-}
-
-function renderTasks() {
-  const activeTasks = state.tasks.filter((t) =>
-    ['open', 'pending_approval'].includes(t.status)
-  );
-  const completedTasks = state.tasks.filter((t) =>
-    ['approved'].includes(t.status)
-  );
-
-  return `
-    <section class="glass section-toolbar">
-      <div>
-        <h2>Tasks</h2>
-        <p class="muted">Build recurring chores and one-time acts of service.</p>
-      </div>
-    </section>
-
-    <section class="content-grid">
-      <article class="panel glass">
-        <div class="panel-head">
-          <h3>Need to Do</h3>
           <div class="split-actions">
             <button class="ghost-btn small" data-open-quick-add="task">Quick Add</button>
             <button class="ghost-btn small" data-open-reuse="task">Reuse Previous</button>
@@ -1299,16 +1257,16 @@ function bindViewEvents(root) {
   });
 
   root.querySelectorAll('[data-open-quick-add]').forEach((btn) => {
-  btn.addEventListener('click', () => openQuickAddModal(btn.dataset.openQuickAdd));
-});
+    btn.addEventListener('click', () => openQuickAddModal(btn.dataset.openQuickAdd));
+  });
 
-root.querySelectorAll('[data-open-reuse]').forEach((btn) => {
-  btn.addEventListener('click', () => openReuseModal(btn.dataset.openReuse));
-});
+  root.querySelectorAll('[data-open-reuse]').forEach((btn) => {
+    btn.addEventListener('click', () => openReuseModal(btn.dataset.openReuse));
+  });
 
-root.querySelectorAll('[data-open-shop]').forEach((btn) => {
-  btn.addEventListener('click', () => openShopModal());
-});
+  root.querySelectorAll('[data-open-shop]').forEach((btn) => {
+    btn.addEventListener('click', () => openShopModal());
+  });
 
   root.querySelectorAll('[data-theme-select]').forEach((btn) => {
     btn.addEventListener('click', async () => {
@@ -1389,8 +1347,6 @@ root.querySelectorAll('[data-open-shop]').forEach((btn) => {
 
   root.querySelector('#leaveCoupleBtn')?.addEventListener('click', leaveCouple);
 }
-
-
 
 async function updateProfile(values) {
   try {
@@ -1976,209 +1932,6 @@ function onPrimaryAction() {
   }
 }
 
-function openModal(type, preset = null) {
-  const partnerId = state.partner?.id || '';
-  const partnerName = state.partner?.name || 'Partner';
-
-  const assigneeOptions = partnerId
-    ? [{ id: partnerId, label: partnerName }]
-    : [];
-
-  const baseButtons = `
-    <div class="modal-actions">
-      <button type="button" class="secondary-btn" id="cancelModalBtn">Cancel</button>
-      <button class="primary-btn">Save</button>
-    </div>
-  `;
-
-  const templates = {
-    task: {
-      title: 'Create task',
-      subtitle: 'Add a recurring or one-time task for your couple.',
-      html: `
-        <label>Title<input name="title" required placeholder="Do the dishes"></label>
-        <label>Points<input name="points_value" type="number" min="1" value="20" required></label>
-        <label class="field-full">Description<textarea name="description" placeholder="Handle kitchen cleanup after dinner."></textarea></label>
-        <label>Assign to<select name="assigned_to_user_id">${assigneeOptions
-          .map((o) => `<option value="${o.id}">${o.label}</option>`)
-          .join('')}</select></label>
-        <label>Category<select name="category"><option>Chores</option><option>Errands</option><option>Romance</option><option>Support</option><option>Custom</option></select></label>
-        <label>Recurrence<select name="recurrence_type"><option value="one_time">One-time</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select></label>
-        <label>Due date<input name="due_date" type="datetime-local"></label>
-        <label>Auto approve on completion
-          <select name="auto_approve">
-            <option value="false">No</option>
-            <option value="true">Yes</option>
-          </select>
-        </label>
-        ${baseButtons}
-      `,
-      submit: async (data) => {
-        const payload = {
-          ...data,
-          auto_approve: data.auto_approve === 'true',
-          couple_id: state.couple.id,
-          created_by_user_id: currentUserId(),
-          status: 'open'
-        };
-
-        const { error } = await supabaseClient.from('tasks').insert(payload);
-        if (error) throw error;
-
-        await createActivity(
-          'task',
-          `${currentUserName()} created task “${data.title}”`,
-          `${data.points_value} XP assigned.`
-        );
-
-        await refreshAndRender('Task created.');
-      }
-    },
-
-    quest: {
-      title: 'Create quest',
-      subtitle: 'Send an immediate request with optional bonus points.',
-     html: `
-  <label>Title<input name="title" required placeholder="Do the dishes" value="${escapeHtml(preset?.title || '')}"></label>
-  <label>Points<input name="points_value" type="number" min="1" value="${Number(preset?.points_value || 20)}" required></label>
-  <label class="field-full">Description<textarea name="description" placeholder="Handle kitchen cleanup after dinner.">${escapeHtml(preset?.description || '')}</textarea></label>
-  <label>Assign to<select name="assigned_to_user_id">${assigneeOptions
-    .map((o) => `<option value="${o.id}">${o.label}</option>`)
-    .join('')}</select></label>
-  <label>Category<select name="category">
-    <option ${preset?.category === 'Chores' ? 'selected' : ''}>Chores</option>
-    <option ${preset?.category === 'Errands' ? 'selected' : ''}>Errands</option>
-    <option ${preset?.category === 'Romance' ? 'selected' : ''}>Romance</option>
-    <option ${preset?.category === 'Support' ? 'selected' : ''}>Support</option>
-    <option ${preset?.category === 'Custom' ? 'selected' : ''}>Custom</option>
-  </select></label>
-  <label>Recurrence<select name="recurrence_type"><option value="one_time">One-time</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select></label>
-  <label>Due date<input name="due_date" type="datetime-local"></label>
-  <label>Auto approve on completion
-    <select name="auto_approve">
-      <option value="false">No</option>
-      <option value="true">Yes</option>
-    </select>
-  </label>
-  ${baseButtons}
-`
-      `,
-      submit: async (data) => {
-        const payload = {
-          ...data,
-          couple_id: state.couple.id,
-          created_by_user_id: currentUserId(),
-          status: 'awaiting_accept'
-        };
-
-        const { error } = await supabaseClient.from('quests').insert(payload);
-        if (error) throw error;
-
-        await createActivity(
-          'quest',
-          `${currentUserName()} sent quest “${data.title}”`,
-          `${Number(data.points_value || 0) + Number(data.bonus_points || 0)} XP available.`
-        );
-
-        await refreshAndRender('Quest created.');
-      }
-    },
-
-    reward: {
-      title: 'Create reward',
-      subtitle: 'Define something fun partners can redeem.',
-      html: `
-        <label>Title<input name="title" required placeholder="30-minute massage"></label>
-        <label>Cost<input name="point_cost" type="number" min="1" value="120" required></label>
-        <label class="field-full">Description<textarea name="description" placeholder="Phone down, full focus."></textarea></label>
-        <label>Category<select name="category"><option>Relaxation</option><option>Date Night</option><option>Food</option><option>Quality Time</option><option>Custom</option></select></label>
-        <label>Cooldown days<input name="cooldown_days" type="number" min="0" value="0"></label>
-        ${baseButtons}
-      `,
-      submit: async (data) => {
-        const payload = {
-          ...data,
-          couple_id: state.couple.id,
-          created_by_user_id: currentUserId(),
-          is_reusable: true,
-          approval_required: true,
-          status: 'open'
-        };
-
-        const { error } = await supabaseClient.from('rewards').insert(payload);
-        if (error) throw error;
-
-        await createActivity(
-          'reward',
-          `${currentUserName()} created reward “${data.title}”`,
-          `${data.point_cost} XP cost.`
-        );
-
-        await refreshAndRender('Reward created.');
-      }
-    },
-
-    review: {
-      title: 'Create value review',
-      subtitle: 'Start a fair-value negotiation on points.',
-      html: `
-        <label>Item title<input name="item_title" required placeholder="Laundry reset"></label>
-        <label>Current value<input name="current_value" type="number" min="1" value="20" required></label>
-        <label class="field-full">Reason<textarea name="reason" placeholder="This takes longer than most chores."></textarea></label>
-        <label>Item type<select name="item_type"><option value="task">Task</option><option value="reward">Reward</option><option value="quest">Quest</option></select></label>
-        <label>Proposed value<input name="proposed_value" type="number" min="1" value="35" required></label>
-        ${baseButtons}
-      `,
-      submit: async (data) => {
-        const payload = {
-          ...data,
-          couple_id: state.couple.id,
-          created_by_user_id: currentUserId(),
-          status: 'open'
-        };
-
-        const { error } = await supabaseClient.from('value_reviews').insert(payload);
-        if (error) throw error;
-
-        await createActivity(
-          'review',
-          `${currentUserName()} opened a value review`,
-          `${data.item_title} proposed at ${data.proposed_value} XP.`
-        );
-
-        await refreshAndRender('Value review created.');
-      }
-    }
-  };
-
-  if (!state.couple && ['task', 'quest', 'reward', 'review'].includes(type)) {
-    toast('Pair first', 'Create or join a couple before adding shared items.');
-    return;
-  }
-
-  const tpl = templates[type];
-  if (!tpl) return;
-
-  modalTitle.textContent = tpl.title;
-  modalSubtitle.textContent = tpl.subtitle;
-  modalForm.innerHTML = tpl.html;
-  modalBackdrop.classList.remove('hidden');
-
-  modalForm.onsubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      const data = Object.fromEntries(new FormData(modalForm).entries());
-      await tpl.submit(data);
-      closeModal();
-    } catch (err) {
-      toast('Save failed', err.message || 'Could not save item.');
-    }
-  };
-
-  document.getElementById('cancelModalBtn').onclick = closeModal;
-}
-
 function openQuickAddModal(type) {
   const items = quickTemplates[type] || [];
   if (!items.length) {
@@ -2284,6 +2037,7 @@ function openReuseModal(type) {
 
   document.getElementById('cancelModalBtn').onclick = closeModal;
 }
+
 function openShopModal() {
   const categories = [...new Set(shopItems.map((item) => item.category))];
 
@@ -2321,6 +2075,212 @@ function openShopModal() {
     </div>
   `;
   modalBackdrop.classList.remove('hidden');
+  document.getElementById('cancelModalBtn').onclick = closeModal;
+}
+
+function openModal(type, preset = null) {
+  const partnerId = state.partner?.id || '';
+  const partnerName = state.partner?.name || 'Partner';
+
+  const assigneeOptions = partnerId
+    ? [{ id: partnerId, label: partnerName }]
+    : [];
+
+  const baseButtons = `
+    <div class="modal-actions">
+      <button type="button" class="secondary-btn" id="cancelModalBtn">Cancel</button>
+      <button class="primary-btn">Save</button>
+    </div>
+  `;
+
+  const templates = {
+    task: {
+      title: 'Create task',
+      subtitle: 'Add a recurring or one-time task for your couple.',
+      html: `
+        <label>Title<input name="title" required placeholder="Do the dishes" value="${escapeHtml(preset?.title || '')}"></label>
+        <label>Points<input name="points_value" type="number" min="1" value="${Number(preset?.points_value || 20)}" required></label>
+        <label class="field-full">Description<textarea name="description" placeholder="Handle kitchen cleanup after dinner.">${escapeHtml(preset?.description || '')}</textarea></label>
+        <label>Assign to<select name="assigned_to_user_id">${assigneeOptions
+          .map((o) => `<option value="${o.id}">${o.label}</option>`)
+          .join('')}</select></label>
+        <label>Category<select name="category">
+          <option ${preset?.category === 'Chores' ? 'selected' : ''}>Chores</option>
+          <option ${preset?.category === 'Errands' ? 'selected' : ''}>Errands</option>
+          <option ${preset?.category === 'Romance' ? 'selected' : ''}>Romance</option>
+          <option ${preset?.category === 'Support' ? 'selected' : ''}>Support</option>
+          <option ${preset?.category === 'Custom' ? 'selected' : ''}>Custom</option>
+        </select></label>
+        <label>Recurrence<select name="recurrence_type"><option value="one_time">One-time</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select></label>
+        <label>Due date<input name="due_date" type="datetime-local"></label>
+        <label>Auto approve on completion
+          <select name="auto_approve">
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+          </select>
+        </label>
+        ${baseButtons}
+      `,
+      submit: async (data) => {
+        const payload = {
+          ...data,
+          auto_approve: data.auto_approve === 'true',
+          couple_id: state.couple.id,
+          created_by_user_id: currentUserId(),
+          status: 'open'
+        };
+
+        const { error } = await supabaseClient.from('tasks').insert(payload);
+        if (error) throw error;
+
+        await createActivity(
+          'task',
+          `${currentUserName()} created task “${data.title}”`,
+          `${data.points_value} XP assigned.`
+        );
+
+        await refreshAndRender('Task created.');
+      }
+    },
+
+    quest: {
+      title: 'Create quest',
+      subtitle: 'Send an immediate request with optional bonus points.',
+      html: `
+        <label>Title<input name="title" required placeholder="Coffee Run" value="${escapeHtml(preset?.title || '')}"></label>
+        <label>Base XP<input name="points_value" type="number" min="1" value="${Number(preset?.points_value || 15)}" required></label>
+        <label class="field-full">Message<textarea name="description" placeholder="Bring me an iced coffee on your way home.">${escapeHtml(preset?.description || '')}</textarea></label>
+        <label>Assign to<select name="assigned_to_user_id">${assigneeOptions
+          .map((o) => `<option value="${o.id}">${o.label}</option>`)
+          .join('')}</select></label>
+        <label>Bonus XP<input name="bonus_points" type="number" min="0" value="${Number(preset?.bonus_points || 10)}"></label>
+        <label>Priority<select name="priority">
+          <option value="normal" ${preset?.priority === 'normal' ? 'selected' : ''}>normal</option>
+          <option value="urgent" ${preset?.priority === 'urgent' ? 'selected' : ''}>urgent</option>
+          <option value="low" ${preset?.priority === 'low' ? 'selected' : ''}>low</option>
+        </select></label>
+        <label>Due at<input name="due_at" type="datetime-local"></label>
+        ${baseButtons}
+      `,
+      submit: async (data) => {
+        const payload = {
+          ...data,
+          couple_id: state.couple.id,
+          created_by_user_id: currentUserId(),
+          status: 'awaiting_accept'
+        };
+
+        const { error } = await supabaseClient.from('quests').insert(payload);
+        if (error) throw error;
+
+        await createActivity(
+          'quest',
+          `${currentUserName()} sent quest “${data.title}”`,
+          `${Number(data.points_value || 0) + Number(data.bonus_points || 0)} XP available.`
+        );
+
+        await refreshAndRender('Quest created.');
+      }
+    },
+
+    reward: {
+      title: 'Create reward',
+      subtitle: 'Define something fun partners can redeem.',
+      html: `
+        <label>Title<input name="title" required placeholder="30-minute massage" value="${escapeHtml(preset?.title || '')}"></label>
+        <label>Cost<input name="point_cost" type="number" min="1" value="${Number(preset?.point_cost || 120)}" required></label>
+        <label class="field-full">Description<textarea name="description" placeholder="Phone down, full focus.">${escapeHtml(preset?.description || '')}</textarea></label>
+        <label>Category<select name="category">
+          <option ${preset?.category === 'Relaxation' ? 'selected' : ''}>Relaxation</option>
+          <option ${preset?.category === 'Date Night' ? 'selected' : ''}>Date Night</option>
+          <option ${preset?.category === 'Food' ? 'selected' : ''}>Food</option>
+          <option ${preset?.category === 'Quality Time' ? 'selected' : ''}>Quality Time</option>
+          <option ${preset?.category === 'Custom' ? 'selected' : ''}>Custom</option>
+        </select></label>
+        <label>Cooldown days<input name="cooldown_days" type="number" min="0" value="0"></label>
+        ${baseButtons}
+      `,
+      submit: async (data) => {
+        const payload = {
+          ...data,
+          couple_id: state.couple.id,
+          created_by_user_id: currentUserId(),
+          is_reusable: true,
+          approval_required: true,
+          status: 'open'
+        };
+
+        const { error } = await supabaseClient.from('rewards').insert(payload);
+        if (error) throw error;
+
+        await createActivity(
+          'reward',
+          `${currentUserName()} created reward “${data.title}”`,
+          `${data.point_cost} XP cost.`
+        );
+
+        await refreshAndRender('Reward created.');
+      }
+    },
+
+    review: {
+      title: 'Create value review',
+      subtitle: 'Start a fair-value negotiation on points.',
+      html: `
+        <label>Item title<input name="item_title" required placeholder="Laundry reset"></label>
+        <label>Current value<input name="current_value" type="number" min="1" value="20" required></label>
+        <label class="field-full">Reason<textarea name="reason" placeholder="This takes longer than most chores."></textarea></label>
+        <label>Item type<select name="item_type"><option value="task">Task</option><option value="reward">Reward</option><option value="quest">Quest</option></select></label>
+        <label>Proposed value<input name="proposed_value" type="number" min="1" value="35" required></label>
+        ${baseButtons}
+      `,
+      submit: async (data) => {
+        const payload = {
+          ...data,
+          couple_id: state.couple.id,
+          created_by_user_id: currentUserId(),
+          status: 'open'
+        };
+
+        const { error } = await supabaseClient.from('value_reviews').insert(payload);
+        if (error) throw error;
+
+        await createActivity(
+          'review',
+          `${currentUserName()} opened a value review`,
+          `${data.item_title} proposed at ${data.proposed_value} XP.`
+        );
+
+        await refreshAndRender('Value review created.');
+      }
+    }
+  };
+
+  if (!state.couple && ['task', 'quest', 'reward', 'review'].includes(type)) {
+    toast('Pair first', 'Create or join a couple before adding shared items.');
+    return;
+  }
+
+  const tpl = templates[type];
+  if (!tpl) return;
+
+  modalTitle.textContent = tpl.title;
+  modalSubtitle.textContent = tpl.subtitle;
+  modalForm.innerHTML = tpl.html;
+  modalBackdrop.classList.remove('hidden');
+
+  modalForm.onsubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const data = Object.fromEntries(new FormData(modalForm).entries());
+      await tpl.submit(data);
+      closeModal();
+    } catch (err) {
+      toast('Save failed', err.message || 'Could not save item.');
+    }
+  };
+
   document.getElementById('cancelModalBtn').onclick = closeModal;
 }
 
@@ -2384,21 +2344,20 @@ function openEditModal(type, id) {
       title: 'Edit quest',
       subtitle: 'Update your quest details.',
       html: `
-  <label>Title<input name="title" required placeholder="Coffee Run" value="${escapeHtml(preset?.title || '')}"></label>
-  <label>Base XP<input name="points_value" type="number" min="1" value="${Number(preset?.points_value || 15)}" required></label>
-  <label class="field-full">Message<textarea name="description" placeholder="Bring me an iced coffee on your way home.">${escapeHtml(preset?.description || '')}</textarea></label>
-  <label>Assign to<select name="assigned_to_user_id">${assigneeOptions
-    .map((o) => `<option value="${o.id}">${o.label}</option>`)
-    .join('')}</select></label>
-  <label>Bonus XP<input name="bonus_points" type="number" min="0" value="${Number(preset?.bonus_points || 10)}"></label>
-  <label>Priority<select name="priority">
-    <option value="normal" ${preset?.priority === 'normal' ? 'selected' : ''}>normal</option>
-    <option value="urgent" ${preset?.priority === 'urgent' ? 'selected' : ''}>urgent</option>
-    <option value="low" ${preset?.priority === 'low' ? 'selected' : ''}>low</option>
-  </select></label>
-  <label>Due at<input name="due_at" type="datetime-local"></label>
-  ${baseButtons}
-`
+        <label>Title<input name="title" required value="${escapeHtml(item.title || '')}"></label>
+        <label>Base XP<input name="points_value" type="number" min="1" value="${Number(item.points_value || 1)}" required></label>
+        <label class="field-full">Message<textarea name="description">${escapeHtml(item.description || '')}</textarea></label>
+        <label>Assign to<select name="assigned_to_user_id">${assigneeOptions
+          .map((o) => `<option value="${o.id}" ${item.assigned_to_user_id === o.id ? 'selected' : ''}>${o.label}</option>`)
+          .join('')}</select></label>
+        <label>Bonus XP<input name="bonus_points" type="number" min="0" value="${Number(item.bonus_points || 0)}"></label>
+        <label>Priority<select name="priority">
+          <option value="normal" ${item.priority === 'normal' ? 'selected' : ''}>Normal</option>
+          <option value="urgent" ${item.priority === 'urgent' ? 'selected' : ''}>Urgent</option>
+          <option value="low" ${item.priority === 'low' ? 'selected' : ''}>Low</option>
+        </select></label>
+        <label>Due at<input name="due_at" type="datetime-local" value="${item.due_at ? item.due_at.slice(0, 16) : ''}"></label>
+        ${baseButtons}
       `
     },
 
@@ -2406,19 +2365,12 @@ function openEditModal(type, id) {
       title: 'Edit reward',
       subtitle: 'Update your reward details.',
       html: `
-  <label>Title<input name="title" required placeholder="30-minute massage" value="${escapeHtml(preset?.title || '')}"></label>
-  <label>Cost<input name="point_cost" type="number" min="1" value="${Number(preset?.point_cost || 120)}" required></label>
-  <label class="field-full">Description<textarea name="description" placeholder="Phone down, full focus.">${escapeHtml(preset?.description || '')}</textarea></label>
-  <label>Category<select name="category">
-    <option ${preset?.category === 'Relaxation' ? 'selected' : ''}>Relaxation</option>
-    <option ${preset?.category === 'Date Night' ? 'selected' : ''}>Date Night</option>
-    <option ${preset?.category === 'Food' ? 'selected' : ''}>Food</option>
-    <option ${preset?.category === 'Quality Time' ? 'selected' : ''}>Quality Time</option>
-    <option ${preset?.category === 'Custom' ? 'selected' : ''}>Custom</option>
-  </select></label>
-  <label>Cooldown days<input name="cooldown_days" type="number" min="0" value="0"></label>
-  ${baseButtons}
-`
+        <label>Title<input name="title" required value="${escapeHtml(item.title || '')}"></label>
+        <label>Cost<input name="point_cost" type="number" min="1" value="${Number(item.point_cost || 1)}" required></label>
+        <label class="field-full">Description<textarea name="description">${escapeHtml(item.description || '')}</textarea></label>
+        <label>Category<input name="category" value="${escapeHtml(item.category || '')}"></label>
+        <label>Cooldown days<input name="cooldown_days" type="number" min="0" value="${Number(item.cooldown_days || 0)}"></label>
+        ${baseButtons}
       `
     },
 
