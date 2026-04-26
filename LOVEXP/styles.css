@@ -942,3 +942,173 @@ code { background: var(--glass-soft-bg); padding: 8px 10px; border-radius: var(-
   .brand-title { font-size: 1.3rem; }
   #modalForm { grid-template-columns: 1fr; }
 }
+
+/* Supabase-backed LOVEXP Shop */
+.shop-modal-layout {
+  display: grid;
+  gap: 22px;
+}
+
+.shop-controls {
+  display: grid;
+  gap: 12px;
+}
+
+.shop-search-label {
+  display: grid;
+  gap: 8px;
+}
+
+.shop-search-label input {
+  width: 100%;
+}
+
+.shop-category-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.shop-chip {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+
+.shop-chip:hover,
+.shop-chip.active {
+  transform: translateY(-1px);
+  border-color: var(--accent-a);
+  background: linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.06));
+}
+
+.shop-section-title {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shop-card {
+  overflow: hidden;
+  padding: 0;
+  align-content: start;
+}
+
+.shop-card-image {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  display: block;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255,255,255,.06);
+}
+
+.shop-card-image.placeholder,
+.shop-flyer-image.placeholder {
+  display: grid;
+  place-items: center;
+  font-size: 42px;
+  min-height: 170px;
+}
+
+.shop-card-body {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.shop-card-head,
+.shop-card-foot,
+.shop-detail-topline {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shop-card-foot {
+  align-items: center;
+  margin-top: 4px;
+}
+
+.shop-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+  color: #fff;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: .72rem;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 10px 24px rgba(0,0,0,.18);
+}
+
+.featured-shop-grid .shop-card {
+  border-color: color-mix(in srgb, var(--accent-a) 55%, var(--line));
+}
+
+.shop-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 42%) 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.shop-flyer-image {
+  width: 100%;
+  max-height: 68vh;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.06);
+}
+
+.shop-detail-copy {
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+  border-radius: var(--radius-sm);
+}
+
+.shop-detail-copy h3,
+.shop-detail-copy p {
+  margin: 0;
+}
+
+.shop-cta-link {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inline-actions {
+  justify-content: start;
+}
+
+@media (max-width: 900px) {
+  .shop-section-title,
+  .shop-card-head,
+  .shop-card-foot,
+  .shop-detail-topline {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .shop-detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-flyer-image {
+    max-height: none;
+  }
+}
